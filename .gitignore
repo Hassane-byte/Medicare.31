@@ -8,4 +8,4 @@ venv/
 mon_env/
 *_env/
 node_modules/
-.claude
+.claude.env
