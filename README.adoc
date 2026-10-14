@@ -11,18 +11,6 @@
 5. note fiche conseil droit
 6. Évaluations bi-hedomadaire
 
-1. Equipe et rôle
 
-
-Projet réalisé par:
-
-|=== 
-| Nom | Rôle 
-
-| https://github.com/HugoTHOLLON[Luna Kalaoun] | Chef de projet  
-| https://github.com/KilianDemangel[Issiakhem Malik] | Développeur BackEnd et Gestion Github  
-| https://github.com/RomainGrassaudPicoreau[Diarra Hassane Junior] |  Développeur FrontEnd
-| https://github.com/ElPoraz[Leroy Grimaldi] |  Développeur 
-|===
 
 
