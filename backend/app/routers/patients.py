@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from app.db import get_db
 from app.models.patient import Patient, PatientContact
+from app.services.auth import get_current_user, RoleChecker, User
 
-router = APIRouter(prefix="/api/patients", tags=["patients"])
+router = APIRouter(prefix="/api/patients", tags=["patients"], dependencies=[Depends(get_current_user)])
 
 
 # ── Schémas ────────────────────────────────────────────────────────────────────
@@ -28,7 +29,6 @@ class PatientCreate(BaseModel):
     prenom: str
     date_naissance: date
     sexe: Optional[str] = None
-    numero_securite_sociale: Optional[str] = None
     groupe_sanguin: Optional[str] = None
     allergie_resume: Optional[str] = None
     statut_patient: str = "actif"
@@ -44,7 +44,6 @@ class PatientOut(BaseModel):
     prenom: str
     date_naissance: Optional[date]
     sexe: Optional[str]
-    numero_securite_sociale: Optional[str]
     groupe_sanguin: Optional[str]
     allergie_resume: Optional[str]
     statut_patient: Optional[str]

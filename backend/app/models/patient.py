@@ -9,13 +9,13 @@ class Patient(Base):
 
     id_patient = Column(Integer, primary_key=True, index=True)
     id_user = Column(Integer, ForeignKey("users.id_user"), nullable=True)
-    numero_dossier = Column(String(50), unique=True, nullable=False)
+    numero_dossier = Column(String(50), unique=True, index=True, nullable=False)
     civilite = Column(String(20))
-    nom = Column(String(100), nullable=False)
-    prenom = Column(String(100), nullable=False)
+    nom = Column(String(100), nullable=False, index=True)
+    prenom = Column(String(100), nullable=False, index=True)
     date_naissance = Column(Date, nullable=False)
     sexe = Column(String(30))
-    numero_securite_sociale = Column(String(30))
+    # numero_securite_sociale = Column(String(30)) # REMOVED for legal reasons
     groupe_sanguin = Column(String(10))
     allergie_resume = Column(Text)
     statut_patient = Column(String(30), default="actif")  # actif, suivi, nouveau, inactif

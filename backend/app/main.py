@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
 from app.db import Base, engine, SessionLocal
+from app.config import settings
 import app.models  # noqa: F401
 
 from app.routers import auth, patients, messages
@@ -38,9 +39,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Medicare31 API", version="1.0.0", lifespan=lifespan)
 
+# Global Exception Handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Log the error here in a real app
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal Server Error",
+            "message": "Une erreur inattendue est survenue sur le serveur.",
+            "detail": str(exc) if settings.env == "dev" else None
+        },
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

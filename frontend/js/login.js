@@ -33,8 +33,8 @@ async function handleSubmit(event) {
     return;
   }
 
-  if (password.length < 4) {
-    showAlert("Mot de passe trop court.");
+  if (password.length < 8) {
+    showAlert("Le mot de passe doit contenir au moins 8 caractères.");
     return;
   }
 
@@ -43,6 +43,7 @@ async function handleSubmit(event) {
   formData.append("password", password);
 
   try {
+    // Use the new API client with FormData
     const response = await fetch("/api/auth/login", {
       method: "POST",
       body: formData,

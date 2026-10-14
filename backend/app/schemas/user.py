@@ -1,9 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, description="Le mot de passe doit contenir au moins 8 caractères")
     nom: str
     prenom: str
     role: str = "patient"
@@ -16,10 +17,9 @@ class PatientRegister(BaseModel):
     prenom: str
     date_naissance: str
     sexe: Optional[str] = None
-    numero_securite_sociale: Optional[str] = None
     # Compte
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, description="Le mot de passe doit contenir au moins 8 caractères")
     # Coordonnées
     telephone_principal: Optional[str] = None
     telephone_secondaire: Optional[str] = None

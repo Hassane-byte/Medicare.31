@@ -228,59 +228,30 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return _build_token(user)
 
 
-@router.post("/france-connect", response_model=Token)
-def france_connect_mock(db: Session = Depends(get_db)):
-    return _get_or_create_mock_user(
-        "fc-mock@medicare.fr",
-        "Dupont",
-        "Jean (FranceConnect)",
-        db,
-    )
+# ... (keep imports)
 
+# ... (keep _normalize_role and _get_role_or_404)
 
-@router.post("/carte-vitale", response_model=Token)
-def carte_vitale_mock(db: Session = Depends(get_db)):
-    return _get_or_create_mock_user(
-        "cv-mock@medicare.fr",
-        "Martin",
-        "Marie (Carte Vitale)",
-        db,
-    )
+# ... (keep _build_token)
 
+# ... (keep register and register_patient)
+
+# ... (keep verify_email)
+
+# ... (keep login)
+
+@router.get("/verify-email")
+# ... (keep verify_email)
+
+@router.post("/login", response_model=Token)
+# ... (keep login)
+
+# REMOVED: france_connect_mock and carte_vitale_mock
 
 def _get_or_create_mock_user(email: str, nom: str, prenom: str, db: Session) -> dict:
-    user = db.query(User).filter(User.email == email).first()
-
-    if not user:
-        role = db.query(Role).filter(Role.code_role == "patient").first()
-
-        if not role:
-            raise HTTPException(status_code=400, detail="Rôle patient inexistant")
-
-        user = User(
-            email=email,
-            password_hash=hash_password("mock"),
-            id_role=role.id_role,
-        )
-
-        db.add(user)
-        db.flush()
-
-        from app.models.patient import Patient
-        import time
-
-        db.add(Patient(
-            id_user=user.id_user,
-            numero_dossier=f"MOCK-{int(time.time())}",
-            nom=nom,
-            prenom=prenom,
-            date_naissance=date(2000, 1, 1),
-        ))
-
-        db.commit()
-        db.refresh(user)
-
-    return _build_token(user)
+    # This function is no longer called by france-connect or carte-vitale mocks
+    # We can keep it as a private helper if needed for tests, but it's better to remove if unused.
+    pass
 
 
 @router.get("/me", response_model=UserOut)
