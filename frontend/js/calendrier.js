@@ -224,7 +224,7 @@ async function refresh() {
 
 function isVisible(a) {
   if (DOCTORS.length === 0) return true;
-  return isVisible(a);
+  return visibleDoctors.has(a.doctor);
 }
 
 // ═══════════════════════════════════════════════
