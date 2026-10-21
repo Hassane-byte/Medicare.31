@@ -219,7 +219,6 @@ def register_patient(data: PatientRegister, db: Session = Depends(get_db)):
         prenom=data.prenom,
         date_naissance=data.date_naissance,
         sexe=data.sexe,
-        numero_securite_sociale=data.numero_securite_sociale,
     )
     db.add(patient)
     db.flush()

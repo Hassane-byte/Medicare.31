@@ -7,6 +7,7 @@ from app.config import settings
 import app.models  # noqa: F401
 
 from app.routers import auth, patients, messages, appointments
+from app.routers import tasks, notifications, documents, medical, calls, dashboard, statistiques
 
 
 def _seed_roles() -> None:
@@ -31,9 +32,14 @@ def _seed_roles() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create the schema on startup if it does not exist yet.
-    # Migrations should later be handled by Alembic.
-    Base.metadata.create_all(bind=engine)
+    # Create the schema on startup if it does not exist yet, then apply
+    # the incremental migrations. Alembic should later replace this.
+    from app.migrations import apply_migrations
+
+    applied = apply_migrations()
+    if applied:
+        print(f"[migrations] appliquées : {', '.join(applied)}")
+
     _seed_roles()
     yield
 
@@ -64,6 +70,13 @@ app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(messages.router)
 app.include_router(appointments.router)
+app.include_router(tasks.router)
+app.include_router(notifications.router)
+app.include_router(documents.router)
+app.include_router(medical.router)
+app.include_router(calls.router)
+app.include_router(dashboard.router)
+app.include_router(statistiques.router)
 
 @app.get("/api/health")
 def health():

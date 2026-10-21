@@ -73,6 +73,7 @@ def _to_out(a: Appointment) -> dict:
         "status_label": STATUS_LABELS.get(a.statut, a.statut),
         "couleur": a.couleur or "blue",
         "notes": a.notes or "",
+        "checked_in_at": a.checked_in_at,
     }
 
 
@@ -268,6 +269,47 @@ def create_appointment(
         Appointment.id_appointment == appt.id_appointment
     ).first()
     return _to_out(appt)
+
+
+@router.post("/{appointment_id}/check-in")
+def check_in(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(staff_only),
+):
+    """Enregistre l'arrivée du patient en salle d'attente."""
+    appt = db.query(Appointment).filter(Appointment.id_appointment == appointment_id).first()
+    if not appt:
+        raise HTTPException(status_code=404, detail="Rendez-vous introuvable")
+
+    if appt.statut in ("annule", "termine"):
+        raise HTTPException(
+            status_code=409,
+            detail="Impossible d'enregistrer une arrivée sur un rendez-vous annulé ou terminé.",
+        )
+
+    appt.checked_in_at = datetime.utcnow()
+    db.commit()
+    db.refresh(appt)
+    appt = _with_relations(db.query(Appointment)).filter(
+        Appointment.id_appointment == appointment_id
+    ).first()
+    return _to_out(appt)
+
+
+@router.delete("/{appointment_id}/check-in", status_code=204)
+def check_out(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(staff_only),
+):
+    """Retire le patient de la salle d'attente."""
+    appt = db.query(Appointment).filter(Appointment.id_appointment == appointment_id).first()
+    if not appt:
+        raise HTTPException(status_code=404, detail="Rendez-vous introuvable")
+
+    appt.checked_in_at = None
+    db.commit()
 
 
 @router.get("/{appointment_id}")

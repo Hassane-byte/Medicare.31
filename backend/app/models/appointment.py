@@ -21,6 +21,7 @@ class Appointment(Base):
     notes = Column(Text)
     created_by_user_id = Column(Integer, ForeignKey("users.id_user"), nullable=False)
     updated_by_user_id = Column(Integer, ForeignKey("users.id_user"), nullable=True)
+    checked_in_at = Column(DateTime, nullable=True)  # arrivée du patient (salle d'attente)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

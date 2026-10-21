@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 
@@ -15,7 +16,7 @@ class PatientRegister(BaseModel):
     civilite: Optional[str] = None
     nom: str
     prenom: str
-    date_naissance: str
+    date_naissance: date
     sexe: Optional[str] = None
     # Compte
     email: EmailStr

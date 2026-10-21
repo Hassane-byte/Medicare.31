@@ -62,6 +62,7 @@ class Document(Base):
     mime_type = Column(String(100))
     taille_ko = Column(Integer)
     source_label = Column(String(255))
+    statut = Column(String(30), default="a_classer")  # a_classer, imprime, envoye
     document_date = Column(Date)
     created_at = Column(DateTime, server_default=func.now())
 
