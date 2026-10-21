@@ -191,11 +191,12 @@ def register_patient(data: PatientRegister, db: Session = Depends(get_db)):
 
 
 @router.get("/verify-email")
-def verify_email(token: str, db: Session = Depends(get_db)):
+def verify_email(token: str, db: Session = Depends(get_db)) -> RedirectResponse:
     from app.config import settings
     user_id = decode_verification_token(token)
     if user_id is None:
         return RedirectResponse(url="/login.html?error=token_invalide")
+
 
     user = db.query(User).filter(User.id_user == user_id).first()
     if not user:
@@ -245,7 +246,7 @@ def me(current_user: User = Depends(get_current_user)):
 def ping(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> dict:
     current_user.last_login_at = func.now()
     db.commit()
 
