@@ -228,32 +228,6 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return _build_token(user)
 
 
-# ... (keep imports)
-
-# ... (keep _normalize_role and _get_role_or_404)
-
-# ... (keep _build_token)
-
-# ... (keep register and register_patient)
-
-# ... (keep verify_email)
-
-# ... (keep login)
-
-@router.get("/verify-email")
-# ... (keep verify_email)
-
-@router.post("/login", response_model=Token)
-# ... (keep login)
-
-# REMOVED: france_connect_mock and carte_vitale_mock
-
-def _get_or_create_mock_user(email: str, nom: str, prenom: str, db: Session) -> dict:
-    # This function is no longer called by france-connect or carte-vitale mocks
-    # We can keep it as a private helper if needed for tests, but it's better to remove if unused.
-    pass
-
-
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     profile = current_user.staff_profile or current_user.patient_profile
