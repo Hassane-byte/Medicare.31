@@ -1,94 +1,135 @@
 # Medicare31 — Portail de Gestion Médicale
 
-Medicare31 est une application web full-stack sécurisée et conteneurisée, conçue pour optimiser la gestion d'un cabinet médical. L'application permet une gestion fluide des patients, des rendez-vous et de la communication interne.
+Medicare31 est une application web full-stack sécurisée et conteneurisée, conçue
+pour optimiser la gestion d'un cabinet médical : patients, rendez-vous,
+salle d'attente, messagerie sécurisée, documents et statistiques.
 
-**Stack Technique :**
+**Stack technique :**
 - **Backend :** FastAPI (Python 3.11)
-- **Base de Données :** PostgreSQL 15
+- **Base de données :** PostgreSQL 15
 - **Frontend :** Vanilla JS, HTML5, CSS3
-- **Infrastructure :** Nginx (Reverse Proxy), Docker & Docker Compose
+- **Infrastructure :** Nginx (reverse proxy), Docker & Docker Compose
 
 ---
 
-## 🚀 Fonctionnalités Principales
+## 🚀 Fonctionnalités
 
-### 👤 Gestion des Utilisateurs & Accès
-- **Système de Rôles (RBAC) :** Contrôle d'accès strict basé sur les rôles : `Administrateur`, `Médecin`, `Secrétariat` et `Patient`.
-- **Authentification Sécurisée :** Utilisation de tokens **JWT (JSON Web Tokens)** avec expiration configurable (par défaut 24h) et hachage des mots de passe via **bcrypt**.
-- **Profils Personnalisés :** Distinction nette entre les comptes techniques (`User`) et les profils métier (`Staff` pour le personnel, `Patient` pour les patients).
+### 👤 Utilisateurs & accès
+- **RBAC strict** : quatre rôles — `Administrateur`, `Médecin`, `Secrétariat`, `Patient` — appliqués côté API sur chaque endpoint.
+- **Authentification JWT** avec expiration configurable (24 h par défaut) et mots de passe hachés en bcrypt.
+- **Session** durable (« se souvenir de moi ») ou limitée au navigateur.
+- **Réinitialisation de mot de passe** par e-mail, avec jeton à usage unique et expiration.
 
-### 🏥 Gestion des Patients
-- **Dossier Médical Numérique :** Centralisation des données d'identité, coordonnées et informations médicales.
-- **Suivi Clinique :** Gestion des constantes vitales (taille, poids, tension), des antécédents et des allergies.
-- **Numérotation Automatique :** Génération automatique de numéros de dossier uniques pour chaque patient.
-- **CRUD Complet :** Interface intuitive pour créer, consulter, modifier et supprimer des fiches patients.
+### 🏥 Patients
+- Dossier administratif complet : identité, coordonnées, statut, médecin traitant.
+- Constantes vitales, antécédents, événements de soins (historique médical).
+- Numérotation automatique des dossiers et recherche instantanée.
 
-### 📅 Organisation & Communication
-- **Agenda Médical :** Gestion des rendez-vous avec attribution de salles et types de consultation.
-- **Messagerie Interne :** Système de fils de discussion sécurisés pour faciliter la communication entre le personnel et les patients.
-- **Notifications & Tâches :** Dashboard professionnel avec gestion de listes de tâches et alertes.
+### 📅 Agenda & accueil
+- Agenda en vues jour / semaine / mois, avec praticiens, salles et types de consultation.
+- Détection automatique des conflits de créneau et durée par défaut pilotée par le type de consultation.
+- **Salle d'attente** : enregistrement d'une arrivée, suivi des patients présents.
+- Statuts de rendez-vous : en attente, confirmé, annulé, terminé.
 
----
+### 💬 Messagerie
+- Fils de discussion un-à-un ou de groupe, avec catégories, priorité et archivage.
+- Compteurs non lus, recherche dans une conversation, réponse à un message.
+- **Pièces jointes** (PDF, images, Word) stockées sur volume dédié et servies de façon authentifiée.
 
-## 🛠️ Architecture Technique
+### 📄 Documents & statistiques
+- Dépôt de documents dans le dossier d'un patient, avec statut de traitement (à classer, imprimé, envoyé).
+- Statistiques du cabinet : activité, répartition par statut et par type de consultation, charge par praticien, évolution sur 12 semaines.
 
-### 📦 Orchestration Docker
-L'application est découpée en 4 services indépendants pour garantir la scalabilité et la maintenance :
-- **`nginx`** : Point d'entrée unique. Gère le routage vers le frontend et l'API, et assure la sécurité via des headers HTTP durcis.
-- **`frontend`** : Serveur statique haute performance distribuant l'interface utilisateur.
-- **`backend`** : API REST performante gérant la logique métier et la validation des données.
-- **`db`** : Base de données PostgreSQL persistante.
-
-### 🔒 Sécurité & Robustesse
-- **Protection CORS** : Restriction des requêtes API aux domaines autorisés.
-- **Validation Stricte** : Utilisation de **Pydantic** pour valider chaque donnée entrante (emails, mots de passe, formats).
-- **Gestion d'Erreurs** : Handler global pour intercepter les crashs et renvoyer des réponses JSON propres sans révéler d'informations sensibles.
-- **Infrastructure Durcie** : 
-  - Image Docker optimisée (Multi-stage build).
-  - Exécution sous utilisateur non-root.
-  - Compression Gzip activée via Nginx pour réduire la latence.
+### 🔔 Notifications & tâches
+- Cloche de notifications branchée sur l'API, avec marquage lu/non lu.
+- Tâches assignées, avec ajout, validation et suppression.
 
 ---
 
-## 📂 Structure du Projet
+## 🛠️ Architecture
+
+### 📦 Services Docker
+| Service | Rôle |
+|---|---|
+| `nginx` | Point d'entrée unique : routage, en-têtes de sécurité durcis, compression |
+| `frontend` | Serveur statique de l'interface |
+| `backend` | API REST (FastAPI) |
+| `db` | PostgreSQL, persistante |
+| `mailhog` | Boîte mail de développement (absent en production) |
+
+### 🔒 Sécurité
+- CORS restreint aux origines autorisées, **Content-Security-Policy** en nginx.
+- Validation systématique des entrées avec Pydantic.
+- Handler global d'erreurs qui ne divulgue pas de détail technique hors développement.
+- Mots de passe bcrypt, jetons JWT signés, accès aux dossiers filtrés par rôle.
+- Image Docker multi-stage, exécution en utilisateur non-root, journaux bornés.
+
+### 🗃️ Migrations
+Le projet applique ses migrations au démarrage (`backend/app/migrations.py`) :
+elles sont versionnées, idempotentes et enregistrées dans `schema_migrations`.
+
+---
+
+## 📂 Structure
 
 ```
 Medicare31/
-├── docker-compose.yml      # Orchestration des services
-├── .env                   # Configuration confidentielle (non committée)
-├── nginx/                 # Configuration du Reverse Proxy
-├── frontend/              # Interface utilisateur (HTML/CSS/JS)
-└── backend/               # API FastAPI
+├── docker-compose.yml        # Services
+├── docker-compose.prod.yml   # Surcharge production (sécurisation, santé, journaux)
+├── .env.example              # Modèle de configuration
+├── DEPLOYMENT.md             # Guide de mise en production
+├── nginx/                    # Reverse proxy
+├── scripts/                  # Sauvegarde / restauration
+├── tests/e2e/                # Tests end-to-end (Playwright)
+├── frontend/                 # Interface (HTML/CSS/JS)
+└── backend/                  # API FastAPI
     ├── app/
-    │   ├── main.py         # Point d'entrée et configuration globale
-    │   ├── config.py       # Gestion des variables d'environnement
-    │   ├── db.py           # Connexion SQLAlchemy
-    │   ├── models/         # Modèles de données ORM
-    │   ├── schemas/        # Validation des données (Pydantic)
-    │   ├── routers/        # Endpoints de l'API
-    │   └── services/       # Logique métier (Auth, Emails)
-    └── Dockerfile          # Configuration du container backend
+    │   ├── main.py           # Point d'entrée, cycle de vie, migrations
+    │   ├── config.py         # Variables d'environnement
+    │   ├── db.py             # Connexion SQLAlchemy
+    │   ├── migrations.py     # Migrations SQL incrémentales
+    │   ├── models/           # Modèles ORM
+    │   ├── schemas/          # Contrats de validation (Pydantic)
+    │   ├── routers/          # Endpoints de l'API
+    │   └── services/         # Auth, e-mails, règles d'accès
+    ├── seed_users.py         # Jeu de données de démonstration
+    └── Dockerfile
 ```
 
 ---
 
-## 🚦 Lancement Rapide
+## 🚦 Démarrage
 
-### Prérequis
-- Docker & Docker Compose installés.
+```bash
+cp .env.example .env      # puis renseignez les variables
+docker compose up -d --build
+docker compose exec backend python seed_users.py
+```
 
-### Installation
-1. **Configurer l'environnement :**
-   ```bash
-   cp .env.example .env
-   # Modifiez le .env avec vos identifiants
-   ```
+- Application : `http://localhost`
+- Documentation API : `http://localhost/docs`
+- Boîte mail de développement (MailHog) : `http://localhost:8025`
 
-2. **Lancer l'application :**
-   ```bash
-   docker compose up -d --build
-   ```
+### Comptes de démonstration
 
-3. **Accès :**
-   - Application : `http://localhost`
-   - Documentation API (Swagger) : `http://localhost/docs`
+| Rôle | E-mail | Mot de passe |
+|---|---|---|
+| Administrateur | `admin@medicare31.fr` | `Admin123!` |
+| Médecin | `dr.martin@medicare31.fr` | `Medecin123!` |
+| Médecin | `dr.blanc@medicare31.fr` | `Medecin123!` |
+| Secrétariat | `secretaire.dupont@medicare31.fr` | `Secretaire123!` |
+| Patient | `patient.durand@gmail.com` | `Patient123!` |
+
+### Tests
+
+```bash
+cd tests/e2e && npm install && npx playwright install chromium
+npm run all
+```
+
+---
+
+## 🚀 Mise en production
+
+Voir **[DEPLOYMENT.md](DEPLOYMENT.md)** : configuration, HTTPS, sauvegardes,
+checklist de sécurité et vérification finale.

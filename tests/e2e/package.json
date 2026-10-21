@@ -1,0 +1,16 @@
+{
+  "name": "medicare31-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tests end-to-end de MediCare31 (Playwright)",
+  "scripts": {
+    "smoke": "node smoke.js",
+    "functional": "node functional.js",
+    "register": "node register.js",
+    "patients": "node patients.js",
+    "all": "node smoke.js && node functional.js && node patients.js && node register.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.0"
+  }
+}

@@ -399,6 +399,15 @@ async function savePatient() {
       api.notify("Patient créé avec succès", 'success');
     }
     closeModal();
+
+    // Le nouveau dossier est le dernier de la liste : on filtre sur son nom
+    // pour l'afficher immédiatement, quelle que soit la pagination.
+    if (!editingId) {
+      const search = document.getElementById('searchInput');
+      if (search) search.value = data.nom;
+      currentPage = 1;
+    }
+
     await loadPatients();
   } catch (err) {
     api.notify(err.message, 'error');

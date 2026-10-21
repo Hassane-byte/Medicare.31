@@ -10,3 +10,7 @@ mon_env/
 node_modules/
 .claude.env
 graphify-out/
+uploads/
+backups/
+tests/e2e/node_modules/
+tests/e2e/package-lock.json
