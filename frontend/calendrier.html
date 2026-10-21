@@ -266,16 +266,7 @@
                   placeholder="Nom du patient"
                   list="patientList"
                 />
-                <datalist id="patientList">
-                  <option>Sophie Durand</option>
-                  <option>Alain Robert</option>
-                  <option>Julie Lefèvre</option>
-                  <option>Marc Dupont</option>
-                  <option>Claire Martin</option>
-                  <option>Paul Lefebvre</option>
-                  <option>Thomas Lambert</option>
-                  <option>Laura Moreau</option>
-                </datalist>
+                <datalist id="patientList"></datalist>
               </div>
             </div>
             <div class="fg">
@@ -288,10 +279,6 @@
                 </svg>
                 <select id="mDoctor">
                   <option value="">-- Choisir --</option>
-                  <option>Dr. Jean Martin</option>
-                  <option>Dr. Sophie Blanc</option>
-                  <option>Dr. Ahmed Karim</option>
-                  <option>Dr. Marie Leclerc</option>
                 </select>
               </div>
             </div>
@@ -310,13 +297,6 @@
                 </svg>
                 <select id="mType">
                   <option value="">-- Type --</option>
-                  <option>Consultation générale</option>
-                  <option>Contrôle annuel</option>
-                  <option>Suivi diabète</option>
-                  <option>Suivi cholestérol</option>
-                  <option>Urgence</option>
-                  <option>Téléconsultation</option>
-                  <option>Renouvellement ordonnance</option>
                 </select>
               </div>
             </div>
@@ -388,7 +368,9 @@
                   type="text"
                   id="mRoom"
                   placeholder="Cabinet 1, Salle B..."
+                  list="roomList"
                 />
+                <datalist id="roomList"></datalist>
               </div>
             </div>
           </div>

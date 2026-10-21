@@ -310,7 +310,7 @@ def mark_as_read(
     thread_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> dict:
     participant = _require_participant(thread_id, current_user.id_user, db)
     participant.unread_count = 0
     participant.last_read_at = func.now()
@@ -325,7 +325,7 @@ def archive_conversation(
     archived: bool = True,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> dict:
     _require_participant(thread_id, current_user.id_user, db)
 
     thread = db.query(ConversationThread).filter(ConversationThread.id_thread == thread_id).first()
@@ -342,7 +342,7 @@ def delete_conversation(
     thread_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> dict:
     _require_participant(thread_id, current_user.id_user, db)
 
     thread = db.query(ConversationThread).filter(

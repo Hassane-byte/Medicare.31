@@ -9,3 +9,4 @@ mon_env/
 *_env/
 node_modules/
 .claude.env
+graphify-out/

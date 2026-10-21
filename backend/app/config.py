@@ -20,7 +20,11 @@ class Settings(BaseSettings):
     env: str = "dev"  # dev, prod
     allowed_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    model_config = {"env_file": ".env"}
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore"
+    }
+
 
 
 settings = Settings()

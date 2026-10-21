@@ -27,125 +27,212 @@ const MONTHS_FR = [
   "décembre",
 ];
 
-const DOCTORS = [
-  { name: "Dr. Jean Martin", color: "#3b82f6", cls: "blue" },
-  { name: "Dr. Sophie Blanc", color: "#10b981", cls: "green" },
-  { name: "Dr. Ahmed Karim", color: "#8b5cf6", cls: "purple" },
-  { name: "Dr. Marie Leclerc", color: "#f59e0b", cls: "orange" },
-];
+const COLOR_HEX = {
+  blue: "#3b82f6",
+  green: "#10b981",
+  purple: "#8b5cf6",
+  orange: "#f59e0b",
+  teal: "#14b8a6",
+  red: "#ef4444",
+};
+const STAFF_COLORS = ["blue", "green", "purple", "orange", "teal", "red"];
 
-let appointments = [
-  {
-    id: 1,
-    patient: "Sophie Durand",
-    doctor: "Dr. Jean Martin",
-    type: "Consultation générale",
-    date: "2025-06-02",
-    start: "09:00",
-    end: "09:30",
-    color: "blue",
-    status: "En attente",
-    notes: "",
-  },
-  {
-    id: 2,
-    patient: "Alain Robert",
-    doctor: "Dr. Jean Martin",
-    type: "Contrôle annuel",
-    date: "2025-06-02",
-    start: "09:30",
-    end: "10:00",
-    color: "blue",
-    status: "Confirmé",
-    notes: "",
-  },
-  {
-    id: 3,
-    patient: "Julie Lefèvre",
-    doctor: "Dr. Sophie Blanc",
-    type: "Suivi cholestérol",
-    date: "2025-06-02",
-    start: "10:15",
-    end: "11:00",
-    color: "green",
-    status: "Confirmé",
-    notes: "Patient à jeun",
-  },
-  {
-    id: 4,
-    patient: "Marc Dupont",
-    doctor: "Dr. Ahmed Karim",
-    type: "Urgence",
-    date: "2025-06-03",
-    start: "08:00",
-    end: "08:30",
-    color: "red",
-    status: "Confirmé",
-    notes: "Douleurs thoraciques",
-  },
-  {
-    id: 5,
-    patient: "Claire Martin",
-    doctor: "Dr. Marie Leclerc",
-    type: "Téléconsultation",
-    date: "2025-06-03",
-    start: "14:00",
-    end: "14:30",
-    color: "orange",
-    status: "Confirmé",
-    notes: "",
-  },
-  {
-    id: 6,
-    patient: "Paul Lefebvre",
-    doctor: "Dr. Jean Martin",
-    type: "Suivi diabète",
-    date: "2025-06-04",
-    start: "11:00",
-    end: "11:45",
-    color: "blue",
-    status: "Confirmé",
-    notes: "Apporter carnet glycémie",
-  },
-  {
-    id: 7,
-    patient: "Thomas Lambert",
-    doctor: "Dr. Sophie Blanc",
-    type: "Renouvellement ordonnance",
-    date: "2025-06-05",
-    start: "15:30",
-    end: "16:00",
-    color: "teal",
-    status: "Confirmé",
-    notes: "",
-  },
-  {
-    id: 8,
-    patient: "Laura Moreau",
-    doctor: "Dr. Ahmed Karim",
-    type: "Consultation générale",
-    date: "2025-06-06",
-    start: "09:00",
-    end: "09:30",
-    color: "purple",
-    status: "En attente",
-    notes: "",
-  },
-];
-let nextId = 9;
+// Reference data (loaded from the API)
+let DOCTORS = [];
+let staffList = [];
+let typeList = [];
+let roomList = [];
+let patientList = [];
+
+// Indexes used when saving an appointment
+let patientByName = new Map();
+
+// Appointments currently displayed (loaded from the API)
+let appointments = [];
+
+const currentUser = typeof getUser === "function" ? getUser() : {};
+const isPatient = currentUser.role === "patient";
 
 let currentView = "week";
-let currentDate = new Date(2025, 5, 2); // June 2, 2025
-let miniDate = new Date(2025, 5, 1);
+let currentDate = new Date();
+let miniDate = new Date();
 let editingId = null;
 let selectedStatus = "Confirmé";
 let selectedColor = "blue";
-let visibleDoctors = new Set(DOCTORS.map((d) => d.name));
+let visibleDoctors = new Set();
+
+// ═══════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════
+function authHeaders(extra = {}) {
+  const token = localStorage.getItem("medicare_token");
+  return token ? { Authorization: `Bearer ${token}`, ...extra } : { ...extra };
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: authHeaders() });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function apiJson(url, method, body) {
+  const res = await fetch(url, {
+    method,
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let message = "Erreur serveur";
+    try {
+      const data = await res.json();
+      message =
+        typeof data.detail === "string"
+          ? data.detail
+          : JSON.stringify(data.detail || data);
+    } catch (_) {}
+    throw new Error(message);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[c]));
+}
+
+function displayName(p) {
+  return `${p.prenom || ""} ${p.nom || ""}`.trim();
+}
+
+async function loadReferenceData() {
+  if (isPatient) return;
+
+  const [staff, types, rooms, patients] = await Promise.all([
+    fetchJson("/api/appointments/staff").catch(() => []),
+    fetchJson("/api/appointments/types").catch(() => []),
+    fetchJson("/api/appointments/rooms").catch(() => []),
+    fetchJson("/api/patients?limit=100").catch(() => []),
+  ]);
+
+  staffList = Array.isArray(staff) ? staff : [];
+  typeList = Array.isArray(types) ? types : [];
+  roomList = Array.isArray(rooms) ? rooms : [];
+  patientList = Array.isArray(patients) ? patients : [];
+
+  patientByName = new Map(patientList.map((p) => [displayName(p), p]));
+
+  DOCTORS = staffList
+    .filter((s) => s.type_staff === "medecin")
+    .map((s, i) => {
+      const cls = STAFF_COLORS[i % STAFF_COLORS.length];
+      return {
+        id: s.id_staff,
+        name: s.display,
+        color: s.couleur_agenda || COLOR_HEX[cls],
+        cls,
+      };
+    });
+
+  visibleDoctors = new Set(DOCTORS.map((d) => d.name));
+  populateModalOptions();
+}
+
+function populateModalOptions() {
+  const doctorSel = document.getElementById("mDoctor");
+  doctorSel.innerHTML =
+    '<option value="">-- Choisir --</option>' +
+    staffList
+      .filter((s) => s.type_staff === "medecin")
+      .map((s) => `<option value="${s.id_staff}">${escapeHtml(s.display)}</option>`)
+      .join("");
+
+  const typeSel = document.getElementById("mType");
+  typeSel.innerHTML =
+    '<option value="">-- Type --</option>' +
+    typeList
+      .map(
+        (t) =>
+          `<option value="${t.id_appointment_type}">${escapeHtml(t.libelle)}</option>`,
+      )
+      .join("");
+
+  document.getElementById("patientList").innerHTML = patientList
+    .map((p) => `<option value="${escapeHtml(displayName(p))}"></option>`)
+    .join("");
+
+  document.getElementById("roomList").innerHTML = roomList
+    .map((r) => `<option value="${escapeHtml(r.nom)}"></option>`)
+    .join("");
+}
+
+function rangeForView() {
+  const d = new Date(currentDate);
+  if (currentView === "day") return [fmtDate(d), fmtDate(d)];
+  if (currentView === "week") {
+    const monday = getMonday(d);
+    return [fmtDate(monday), fmtDate(addDays(monday, 6))];
+  }
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  const gridStart = addDays(first, -((first.getDay() + 6) % 7));
+  return [fmtDate(gridStart), fmtDate(addDays(gridStart, 41))];
+}
+
+function mapAppt(a) {
+  return {
+    id: a.id_appointment,
+    id_patient: a.id_patient,
+    id_staff: a.id_staff,
+    id_room: a.id_room,
+    id_appointment_type: a.id_appointment_type,
+    patient: a.patient_nom,
+    doctor: a.staff_nom,
+    type: a.type_libelle || "",
+    date: a.date,
+    start: a.start,
+    end: a.end,
+    color: a.couleur || "blue",
+    status: a.status_label,
+    notes: a.notes || "",
+    room: a.room_nom || "",
+  };
+}
+
+async function loadAppointments() {
+  const [start, end] = rangeForView();
+  const query = `?start=${start}&end=${end}`;
+  const url = isPatient
+    ? `/api/appointments/mine${query}`
+    : `/api/appointments/${query}`;
+  try {
+    const data = await fetchJson(url);
+    appointments = (data || []).map(mapAppt);
+  } catch (err) {
+    console.error("Chargement des rendez-vous impossible :", err);
+    appointments = [];
+  }
+}
+
+async function refresh() {
+  await loadAppointments();
+  renderView();
+}
+
+function isVisible(a) {
+  if (DOCTORS.length === 0) return true;
+  return isVisible(a);
+}
 
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-function init() {
+async function init() {
+  await loadReferenceData();
+  await loadAppointments();
   renderDoctorList();
   renderMiniCal();
   renderView();
@@ -187,12 +274,13 @@ function navigate(dir) {
       1,
     );
   else currentDate = addDays(currentDate, dir);
-  renderView();
+  refresh();
 }
 
 function goToday() {
   currentDate = new Date();
-  renderView();
+  miniDate = new Date();
+  refresh();
 }
 
 function setView(v) {
@@ -210,7 +298,7 @@ function setView(v) {
   else if (v === "month")
     document.getElementById("monthView").classList.add("active");
   else document.getElementById("dayView").classList.add("active");
-  renderView();
+  refresh();
 }
 
 // ═══════════════════════════════════════════════
@@ -294,7 +382,7 @@ function renderWeek() {
 
     // Appointments
     const dayAppts = appointments.filter(
-      (a) => a.date === fmtDate(d) && visibleDoctors.has(a.doctor),
+      (a) => a.date === fmtDate(d) && isVisible(a),
     );
     dayAppts.forEach((a) => {
       col.appendChild(buildApptEl(a));
@@ -368,7 +456,7 @@ function renderDay() {
   }
   appointments
     .filter(
-      (a) => a.date === fmtDate(currentDate) && visibleDoctors.has(a.doctor),
+      (a) => a.date === fmtDate(currentDate) && isVisible(a),
     )
     .forEach((a) => col.appendChild(buildApptEl(a)));
   col.addEventListener("click", (e) => {
@@ -425,7 +513,7 @@ function renderMonth() {
     cell.appendChild(dateEl);
 
     const dayAppts = appointments.filter(
-      (a) => a.date === fmtDate(d) && visibleDoctors.has(a.doctor),
+      (a) => a.date === fmtDate(d) && isVisible(a),
     );
     dayAppts.slice(0, 3).forEach((a) => {
       const el = document.createElement("div");
@@ -503,7 +591,7 @@ function renderMiniCal() {
     el.textContent = d.getDate();
     el.onclick = () => {
       currentDate = new Date(d);
-      renderView();
+      refresh();
     };
     grid.appendChild(el);
   }
@@ -529,6 +617,10 @@ function updateCurrentTimeLine() {
 // MODAL
 // ═══════════════════════════════════════════════
 function openModal(date, startTime) {
+  if (isPatient) {
+    showToast("La prise de rendez-vous est réservée au personnel.");
+    return;
+  }
   editingId = null;
   selectedStatus = "Confirmé";
   selectedColor = "blue";
@@ -567,8 +659,8 @@ function openEditModal(a) {
   document.getElementById("btnDelete").style.display = "flex";
 
   document.getElementById("mPatient").value = a.patient;
-  document.getElementById("mDoctor").value = a.doctor;
-  document.getElementById("mType").value = a.type;
+  document.getElementById("mDoctor").value = String(a.id_staff ?? "");
+  document.getElementById("mType").value = String(a.id_appointment_type ?? "");
   document.getElementById("mRoom").value = a.room || "";
   document.getElementById("mNotes").value = a.notes;
   document.getElementById("mDate").value = a.date;
@@ -610,61 +702,72 @@ function pickColor(el) {
   selectedColor = el.dataset.color;
 }
 
-function saveAppt() {
-  const patient = document.getElementById("mPatient").value.trim();
-  const doctor = document.getElementById("mDoctor").value;
-  const type = document.getElementById("mType").value;
+async function saveAppt() {
+  const patientName = document.getElementById("mPatient").value.trim();
+  const doctorId = document.getElementById("mDoctor").value;
+  const typeId = document.getElementById("mType").value;
   const date = document.getElementById("mDate").value;
   const start = document.getElementById("mStart").value;
   const end = document.getElementById("mEnd").value;
-  if (!patient || !doctor || !type || !date || !start || !end) {
+  const roomName = document.getElementById("mRoom").value.trim();
+
+  if (!patientName || !doctorId || !typeId || !date || !start || !end) {
     showToast("Veuillez remplir les champs obligatoires.", false);
     return;
   }
 
-  if (editingId) {
-    const idx = appointments.findIndex((a) => a.id === editingId);
-    if (idx !== -1)
-      appointments[idx] = {
-        ...appointments[idx],
-        patient,
-        doctor,
-        type,
-        date,
-        start,
-        end,
-        status: selectedStatus,
-        color: selectedColor,
-        notes: document.getElementById("mNotes").value,
-        room: document.getElementById("mRoom").value,
-      };
-    showToast("Rendez-vous modifié avec succès");
-  } else {
-    appointments.push({
-      id: nextId++,
-      patient,
-      doctor,
-      type,
-      date,
-      start,
-      end,
-      status: selectedStatus,
-      color: selectedColor,
-      notes: document.getElementById("mNotes").value,
-      room: document.getElementById("mRoom").value,
-    });
-    showToast("Rendez-vous ajouté avec succès");
+  const patient = patientByName.get(patientName);
+  if (!patient) {
+    showToast("Patient introuvable : choisissez-le dans la liste.", false);
+    return;
   }
-  closeModalBtn();
-  renderView();
+
+  if (end <= start) {
+    showToast("L'heure de fin doit suivre l'heure de début.", false);
+    return;
+  }
+
+  const room = roomName
+    ? roomList.find((r) => r.nom.toLowerCase() === roomName.toLowerCase())
+    : null;
+
+  const payload = {
+    id_patient: patient.id_patient,
+    id_staff: Number(doctorId),
+    id_room: room ? room.id_room : null,
+    id_appointment_type: Number(typeId),
+    start_at: `${date}T${start}:00`,
+    end_at: `${date}T${end}:00`,
+    statut: selectedStatus,
+    couleur: selectedColor,
+    notes: document.getElementById("mNotes").value.trim(),
+  };
+
+  try {
+    if (editingId) {
+      await apiJson(`/api/appointments/${editingId}`, "PUT", payload);
+      showToast("Rendez-vous modifié avec succès");
+    } else {
+      await apiJson("/api/appointments/", "POST", payload);
+      showToast("Rendez-vous ajouté avec succès");
+    }
+    closeModalBtn();
+    await refresh();
+  } catch (err) {
+    showToast(err.message || "Erreur lors de l'enregistrement.", false);
+  }
 }
 
-function deleteAppt() {
+async function deleteAppt() {
   if (!editingId) return;
-  appointments = appointments.filter((a) => a.id !== editingId);
-  closeModalBtn();
-  showToast("Rendez-vous supprimé");
-  renderView();
+  try {
+    await apiJson(`/api/appointments/${editingId}`, "DELETE");
+    closeModalBtn();
+    showToast("Rendez-vous supprimé");
+    await refresh();
+  } catch (err) {
+    showToast(err.message || "Erreur lors de la suppression.", false);
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -696,12 +799,21 @@ function showDetail(a, e) {
     document.getElementById("dp-notes-row").style.display = "flex";
   } else document.getElementById("dp-notes-row").style.display = "none";
 
-  document.getElementById("dp-edit").onclick = () => openEditModal(a);
-  document.getElementById("dp-del").onclick = () => {
-    appointments = appointments.filter((x) => x.id !== a.id);
-    closeDetail();
-    showToast("Rendez-vous supprimé");
-    renderView();
+  const editBtn = document.getElementById("dp-edit");
+  const delBtn = document.getElementById("dp-del");
+  editBtn.style.display = isPatient ? "none" : "flex";
+  delBtn.style.display = isPatient ? "none" : "flex";
+
+  editBtn.onclick = () => openEditModal(a);
+  delBtn.onclick = async () => {
+    try {
+      await apiJson(`/api/appointments/${a.id}`, "DELETE");
+      closeDetail();
+      showToast("Rendez-vous supprimé");
+      await refresh();
+    } catch (err) {
+      showToast(err.message || "Erreur lors de la suppression.", false);
+    }
   };
 
   const x = Math.min(e.clientX + 10, window.innerWidth - 320);
