@@ -7,7 +7,11 @@ from app.db import get_db
 from app.models.patient import Patient, PatientContact
 from app.services.auth import get_current_user, RoleChecker, User
 
-router = APIRouter(prefix="/api/patients", tags=["patients"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/api/patients", tags=["patients"])
+
+STAFF_ROLES = ("medecin", "secretariat", "admin")
+staff_only = RoleChecker(list(STAFF_ROLES))
+medical_staff_only = RoleChecker(["medecin", "admin"])
 
 
 # ── Schémas ────────────────────────────────────────────────────────────────────
@@ -81,6 +85,7 @@ def list_patients(
     skip: int = Query(0, ge=0),
     limit: int = Query(8, ge=1, le=100),
     db: Session = Depends(get_db),
+    _: User = Depends(staff_only),
 ):
     q = db.query(Patient).options(joinedload(Patient.contact))
     if search:
@@ -97,7 +102,8 @@ def count_patients(
     search: Optional[str] = Query(None),
     statut: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-):
+    _: User = Depends(staff_only),
+) -> dict:
     q = db.query(Patient)
     if search:
         q = q.filter(
@@ -109,7 +115,11 @@ def count_patients(
 
 
 @router.post("/", response_model=PatientOut, status_code=201)
-def create_patient(data: PatientCreate, db: Session = Depends(get_db)):
+def create_patient(
+    data: PatientCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(staff_only),
+):
     patient = Patient(
         numero_dossier=_next_dossier(db),
         **{k: v for k, v in data.model_dump(exclude={"contact"}).items()},
@@ -124,8 +134,38 @@ def create_patient(data: PatientCreate, db: Session = Depends(get_db)):
     return _flatten(patient)
 
 
+@router.get("/me", response_model=PatientOut)
+def get_my_patient(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Dossier du patient connecté (route patient)."""
+    if not current_user.patient_profile:
+        raise HTTPException(status_code=404, detail="Aucun dossier patient associé")
+
+    patient = (
+        db.query(Patient)
+        .options(joinedload(Patient.contact))
+        .filter(Patient.id_patient == current_user.patient_profile.id_patient)
+        .first()
+    )
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient introuvable")
+    return _flatten(patient)
+
+
 @router.get("/{patient_id}", response_model=PatientOut)
-def get_patient(patient_id: int, db: Session = Depends(get_db)):
+def get_patient(
+    patient_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    role = current_user.role.code_role
+    if role not in STAFF_ROLES:
+        own = current_user.patient_profile
+        if not own or own.id_patient != patient_id:
+            raise HTTPException(status_code=403, detail="Accès refusé à ce dossier")
+
     patient = (
         db.query(Patient)
         .options(joinedload(Patient.contact))
@@ -138,7 +178,12 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{patient_id}", response_model=PatientOut)
-def update_patient(patient_id: int, data: PatientCreate, db: Session = Depends(get_db)):
+def update_patient(
+    patient_id: int,
+    data: PatientCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(staff_only),
+):
     patient = db.query(Patient).filter(Patient.id_patient == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient introuvable")
@@ -159,7 +204,11 @@ def update_patient(patient_id: int, data: PatientCreate, db: Session = Depends(g
 
 
 @router.delete("/{patient_id}", status_code=204)
-def delete_patient(patient_id: int, db: Session = Depends(get_db)):
+def delete_patient(
+    patient_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(medical_staff_only),
+):
     patient = db.query(Patient).filter(Patient.id_patient == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient introuvable")
