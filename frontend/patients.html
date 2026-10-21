@@ -220,10 +220,10 @@
             onchange="filterPatients()"
           >
             <option value="">Tous les statuts</option>
-            <option value="Actif">Actif</option>
-            <option value="Nouveau">Nouveau</option>
-            <option value="Suivi">Suivi</option>
-            <option value="Inactif">Inactif</option>
+            <option value="actif">Actif</option>
+            <option value="nouveau">Nouveau</option>
+            <option value="suivi">Suivi</option>
+            <option value="inactif">Inactif</option>
           </select>
           <select
             class="filter-select"
@@ -231,10 +231,6 @@
             onchange="filterPatients()"
           >
             <option value="">Tous les médecins</option>
-            <option>Dr. Jean Martin</option>
-            <option>Dr. Sophie Blanc</option>
-            <option>Dr. Ahmed Karim</option>
-            <option>Dr. Marie Leclerc</option>
           </select>
           <div class="view-switch">
             <button
@@ -513,10 +509,6 @@
                   <div class="inp-wrap no-ico">
                     <select id="fMedecin">
                       <option value="">-- Choisir --</option>
-                      <option>Dr. Jean Martin</option>
-                      <option>Dr. Sophie Blanc</option>
-                      <option>Dr. Ahmed Karim</option>
-                      <option>Dr. Marie Leclerc</option>
                     </select>
                   </div>
                 </div>
@@ -524,10 +516,10 @@
                   <label for="fStatut">Statut</label>
                   <div class="inp-wrap no-ico">
                     <select id="fStatut">
-                      <option>Actif</option>
-                      <option>Nouveau</option>
-                      <option>Suivi</option>
-                      <option>Inactif</option>
+                      <option value="actif">Actif</option>
+                      <option value="nouveau">Nouveau</option>
+                      <option value="suivi">Suivi</option>
+                      <option value="inactif">Inactif</option>
                     </select>
                   </div>
                 </div>
@@ -829,7 +821,7 @@
           </button>
           <div style="display: flex; gap: 10px; margin-left: auto">
             <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-            <button class="btn-save" onclick="savePatient()">
+            <button class="btn-save" id="saveBtn" onclick="savePatient()">
               <svg viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
@@ -847,6 +839,7 @@
     </div>
 
     <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
 
     <script src="js/patients.js"></script>
   </body>
