@@ -27,12 +27,27 @@ class Patient(Base):
     medecin_traitant = relationship(
         "Staff", back_populates="patients_traites", foreign_keys=[medecin_traitant_id]
     )
-    contact = relationship("PatientContact", back_populates="patient", uselist=False)
-    security = relationship("PatientSecurity", back_populates="patient", uselist=False)
-    medical_record = relationship("MedicalRecord", back_populates="patient", uselist=False)
-    vitals = relationship("MedicalVital", back_populates="patient")
-    events = relationship("MedicalEvent", back_populates="patient")
-    documents = relationship("Document", back_populates="patient")
+    # Les tables filles portent toutes une FK id_patient NOT NULL : sans cascade,
+    # SQLAlchemy tenterait de la mettre à NULL et la suppression échouerait.
+    contact = relationship(
+        "PatientContact", back_populates="patient", uselist=False, cascade="all, delete-orphan"
+    )
+    security = relationship(
+        "PatientSecurity", back_populates="patient", uselist=False, cascade="all, delete-orphan"
+    )
+    medical_record = relationship(
+        "MedicalRecord", back_populates="patient", uselist=False, cascade="all, delete-orphan"
+    )
+    vitals = relationship(
+        "MedicalVital", back_populates="patient", cascade="all, delete-orphan"
+    )
+    events = relationship(
+        "MedicalEvent", back_populates="patient", cascade="all, delete-orphan"
+    )
+    documents = relationship(
+        "Document", back_populates="patient", cascade="all, delete-orphan"
+    )
+    # Pas de cascade : les rendez-vous sont bloqués à la suppression (cf. router patients).
     appointments = relationship("Appointment", back_populates="patient")
 
 
