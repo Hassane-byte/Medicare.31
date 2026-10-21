@@ -1,33 +1,13 @@
+/**
+ * Création d'un espace patient : toutes les informations saisies sont
+ * transmises à l'API, qui crée le dossier et envoie l'e-mail de confirmation.
+ */
+
 let current = 1;
-
-function normalizeName(value) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z]/g, '');
-}
-
-function generateEmail() {
-  const prenom = normalizeName(document.getElementById('prenom').value);
-  const nom = normalizeName(document.getElementById('nom').value);
-  const emailInput = document.getElementById('email');
-
-  if (!prenom || !nom) {
-    emailInput.value = '';
-    return '';
-  }
-
-  const generatedEmail = `${prenom.charAt(0)}${nom}@clinique.fr`;
-  emailInput.value = generatedEmail;
-  return generatedEmail;
-}
 
 function goTo(step) {
   if (step > current && !validate(current)) return;
 
-  if (step === 2) generateEmail();
   if (step === 4) fillSummary();
 
   for (let i = 1; i <= 4; i++) {
@@ -59,6 +39,7 @@ function validate(step) {
 
     if (!condition(el.value)) {
       el.classList.add('error');
+      el.classList.remove('valid');
       err.classList.add('show');
       ok = false;
     } else {
@@ -73,16 +54,7 @@ function validate(step) {
     check('prenom', 'err-prenom', value => value.trim().length > 0);
     check('ddn', 'err-ddn', value => value.length > 0);
     check('sexe', 'err-sexe', value => value !== '');
-
-    const email = generateEmail();
-    const errEmail = document.getElementById('err-email');
-
-    if (!email) {
-      errEmail.classList.add('show');
-      ok = false;
-    } else {
-      errEmail.classList.remove('show');
-    }
+    check('email', 'err-email', value => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim()));
   }
 
   if (step === 2) {
@@ -137,8 +109,6 @@ function validate(step) {
 }
 
 function fillSummary() {
-  generateEmail();
-
   const civ = document.querySelector('input[name="civilite"]:checked');
   const ddn = document.getElementById('ddn').value;
   const adresse = [
@@ -147,7 +117,11 @@ function fillSummary() {
     document.getElementById('ville').value
   ].filter(Boolean).join(', ');
 
-  document.getElementById('sum-civ').textContent = civ ? civ.value : '—';
+  const CIVILITES = { M: 'M.', Mme: 'Mme', Autre: 'Autre' };
+
+  document.getElementById('sum-civ').textContent = civ
+    ? CIVILITES[civ.value] || civ.value
+    : '—';
   document.getElementById('sum-nom').textContent = document.getElementById('nom').value || '—';
   document.getElementById('sum-prenom').textContent = document.getElementById('prenom').value || '—';
   document.getElementById('sum-email').textContent = document.getElementById('email').value || '—';
@@ -166,46 +140,62 @@ function fillSummary() {
   }
 }
 
+function showFeedback(message, type = 'error') {
+  const el = document.getElementById('registerFeedback');
+  if (!el) return;
+  el.textContent = message;
+  el.className = 'register-feedback ' + type;
+  el.classList.add('show');
+}
+
 async function submitForm() {
-  if (!validate(3)) {
-    goTo(3);
-    return;
+  // On revalide l'ensemble des étapes avant d'envoyer.
+  for (const step of [1, 2, 3]) {
+    if (!validate(step)) {
+      goTo(step);
+      showFeedback('Certaines informations sont incomplètes ou invalides.');
+      return;
+    }
   }
 
   const submitBtn = document.getElementById('submitBtn');
-  const email = generateEmail();
-  const password = document.getElementById('pwd').value;
-  const nom = document.getElementById('nom').value.trim();
-  const prenom = document.getElementById('prenom').value.trim();
+  const civ = document.querySelector('input[name="civilite"]:checked');
 
-  if (!email) {
-    alert("Impossible de générer l'adresse e-mail.");
-    goTo(1);
-    return;
-  }
+  const payload = {
+    civilite: civ ? civ.value : null,
+    nom: document.getElementById('nom').value.trim(),
+    prenom: document.getElementById('prenom').value.trim(),
+    date_naissance: document.getElementById('ddn').value,
+    sexe: document.getElementById('sexe').value || null,
+    email: document.getElementById('email').value.trim().toLowerCase(),
+    password: document.getElementById('pwd').value,
+    telephone_principal: document.getElementById('tel').value.trim() || null,
+    telephone_secondaire: document.getElementById('tel2').value.trim() || null,
+    adresse_ligne1: document.getElementById('adresse').value.trim() || null,
+    code_postal: document.getElementById('cp').value.trim() || null,
+    ville: document.getElementById('ville').value.trim() || null,
+    cgu_accepted: document.getElementById('cgu').checked,
+    hds_consent: document.getElementById('hds').checked,
+    notif_email_sms_consent: true
+  };
 
   submitBtn.disabled = true;
-  submitBtn.innerHTML = 'Création en cours...';
+  submitBtn.textContent = 'Création en cours…';
 
   try {
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch('/api/auth/register/patient', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password,
-        nom: nom,
-        prenom: prenom,
-        role: 'patient'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      alert(data.detail || 'Erreur pendant la création du compte.');
+      const detail = typeof data.detail === 'string'
+        ? data.detail
+        : 'Erreur pendant la création du compte.';
+      showFeedback(detail);
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Créer mon compte';
       return;
@@ -216,84 +206,72 @@ async function submitForm() {
     });
 
     document.getElementById('stepper').style.display = 'none';
-    document.getElementById('successEmail').textContent = email;
+    document.getElementById('successEmail').textContent = payload.email;
     document.getElementById('successView').classList.add('show');
 
   } catch (error) {
     console.error(error);
-    alert('Erreur serveur. Vérifiez que le backend est lancé.');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Créer mon compte';
+    showFeedback('Erreur serveur. Vérifiez que le backend est lancé.');
+  } finally {
+    if (submitBtn.disabled) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Créer mon compte';
+    }
   }
 }
 
-function checkStrength(value) {
-  let score = 0;
+/* ── Force du mot de passe ────────────────────────────────────────────────── */
 
+const STRENGTH_COLORS = ['#f04438', '#f79009', '#e8a838', '#12b76a'];
+const STRENGTH_LABELS = ['Très faible', 'Faible', 'Moyen', 'Fort'];
+
+function checkStrength(value) {
+  const bars = ['sb1', 'sb2', 'sb3', 'sb4'];
+  const label = document.getElementById('strengthLabel');
+
+  let score = 0;
   if (value.length >= 8) score++;
-  if (/[A-Z]/.test(value)) score++;
-  if (/[0-9]/.test(value)) score++;
+  if (value.length >= 12) score++;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+  if (/\d/.test(value)) score++;
   if (/[^A-Za-z0-9]/.test(value)) score++;
 
-  const colors = ['#f04438', '#f79009', '#e8a838', '#12b76a'];
-  const labels = ['Très faible', 'Faible', 'Moyen', 'Fort'];
-  const bars = ['sb1', 'sb2', 'sb3', 'sb4'];
+  const index = value ? Math.min(Math.floor((score / 5) * 4), 3) : -1;
 
-  bars.forEach((id, index) => {
+  bars.forEach((id, i) => {
     const bar = document.getElementById(id);
     if (!bar) return;
-    bar.style.background = index < score ? colors[score - 1] : 'var(--border)';
+    if (i <= index) {
+      bar.style.background = STRENGTH_COLORS[index];
+      bar.classList.add('on');
+    } else {
+      bar.style.background = '';
+      bar.classList.remove('on');
+    }
   });
 
-  const label = document.getElementById('strengthLabel');
-  if (!label) return;
-
-  label.textContent = value.length ? labels[score - 1] || 'Très faible' : 'Entrez un mot de passe';
-  label.style.color = value.length ? colors[score - 1] : 'var(--text-light)';
+  if (label) label.textContent = value ? STRENGTH_LABELS[index] : 'Entrez un mot de passe';
 }
 
 function toggleEye(inputId, iconId) {
   const input = document.getElementById(inputId);
   const icon = document.getElementById(iconId);
-  const isHidden = input.type === 'password';
 
-  input.type = isHidden ? 'text' : 'password';
+  if (!input) return;
 
-  icon.innerHTML = isHidden
-    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-       <line x1="1" y1="1" x2="23" y2="23"/>`
-    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-       <circle cx="12" cy="12" r="3"/>`;
+  const visible = input.type === 'text';
+  input.type = visible ? 'password' : 'text';
+
+  if (!icon) return;
+
+  icon.innerHTML = visible
+    ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`
+    : `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  const nomInput = document.getElementById('nom');
-  const prenomInput = document.getElementById('prenom');
-  const numSecuInput = document.getElementById('numsecu');
-
-  if (nomInput) nomInput.addEventListener('input', generateEmail);
-  if (prenomInput) prenomInput.addEventListener('input', generateEmail);
-
-  if (numSecuInput) {
-    numSecuInput.addEventListener('input', function () {
-      let value = this.value.replace(/\D/g, '').substring(0, 15);
-      this.value = value.replace(
-        /(\d{1})(\d{2})(\d{2})(\d{2})(\d{3})(\d{3})(\d{2})?/,
-        function (_, a, b, c, d, e, f, g) {
-          return [a, b, c, d, e, f, g].filter(Boolean).join(' ');
-        }
-      );
-    });
-  }
-
-  ['tel', 'tel2'].forEach(function (id) {
-    const input = document.getElementById(id);
-    if (!input) return;
-
-    input.addEventListener('input', function () {
-      let value = this.value.replace(/\D/g, '').substring(0, 10);
-      this.value = value.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
-    });
+document.addEventListener('DOMContentLoaded', () => {
+  const year = String(new Date().getFullYear());
+  document.querySelectorAll('[data-year]').forEach((el) => {
+    el.textContent = year;
   });
 });

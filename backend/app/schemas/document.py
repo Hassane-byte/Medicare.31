@@ -25,6 +25,7 @@ class DocumentOut(BaseModel):
     mime_type: Optional[str] = None
     taille_ko: Optional[int] = None
     source_label: Optional[str] = None
+    statut: str = "a_classer"
     document_date: Optional[date] = None
     created_at: Optional[datetime] = None
 

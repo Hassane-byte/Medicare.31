@@ -113,23 +113,15 @@
             </div>
 
             <div class="form-group full">
-              <label for="email">Adresse e-mail générée</label>
+              <label for="email">Adresse e-mail</label>
               <div class="input-wrap">
                 <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <input type="email" id="email" placeholder="mdupont@clinique.fr" readonly>
+                <input type="email" id="email" placeholder="prenom.nom@exemple.fr" autocomplete="email">
               </div>
-              <span style="font-size:.73rem;color:var(--text-light);margin-top:3px">Format : première lettre du prénom + nom de famille + @clinique.fr</span>
-              <span class="field-error" id="err-email">Impossible de générer l'adresse e-mail.</span>
+              <span style="font-size:.73rem;color:var(--text-light);margin-top:3px">Une adresse est proposée d'après votre nom : vous pouvez la modifier.</span>
+              <span class="field-error" id="err-email">Adresse e-mail invalide.</span>
             </div>
 
-            <div class="form-group full">
-              <label for="numsecu">Numéro de sécurité sociale</label>
-              <div class="input-wrap">
-                <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                <input type="text" id="numsecu" placeholder="1 85 04 75 123 456 78" maxlength="21">
-              </div>
-              <span style="font-size:.73rem;color:var(--text-light);margin-top:3px">Optionnel — permet de pré-remplir votre dossier médical.</span>
-            </div>
 
           </div>
         </div>
@@ -198,13 +190,6 @@
               <span class="field-error" id="err-ville">Ce champ est requis.</span>
             </div>
 
-            <div class="form-group">
-              <label for="medecin">Médecin traitant</label>
-              <div class="input-wrap">
-                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                <input type="text" id="medecin" placeholder="Dr. Jean Martin">
-              </div>
-            </div>
 
           </div>
         </div>
@@ -262,7 +247,7 @@
               <label class="checkbox-wrap">
                 <input type="checkbox" id="cgu">
                 <div class="custom-cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-                <span class="cb-label">J'accepte les <a href="#">Conditions Générales d'Utilisation</a> et la <a href="#">Politique de confidentialité</a> de MediCare31. <span class="req">*</span></span>
+                <span class="cb-label">J'accepte les <a href="legal.html#mentions" target="_blank" rel="noopener">Conditions Générales d'Utilisation</a> et la <a href="legal.html#confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a> de MediCare31. <span class="req">*</span></span>
               </label>
               <span class="field-error" id="err-cgu">Vous devez accepter les CGU pour continuer.</span>
 
@@ -300,7 +285,7 @@
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <span style="font-size:.8rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em">Identité</span>
-                <a href="#" class="edit-link" onclick="goTo(1);return false">Modifier</a>
+                <button type="button" class="edit-link" onclick="goTo(1)">Modifier</button>
               </div>
               <div class="summary-grid">
                 <div class="summary-item"><span class="summary-label">Civilité</span><span class="summary-value" id="sum-civ">M.</span></div>
@@ -315,7 +300,7 @@
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <span style="font-size:.8rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em">Coordonnées</span>
-                <a href="#" class="edit-link" onclick="goTo(2);return false">Modifier</a>
+                <button type="button" class="edit-link" onclick="goTo(2)">Modifier</button>
               </div>
               <div class="summary-grid">
                 <div class="summary-item"><span class="summary-label">E-mail</span><span class="summary-value" id="sum-email">—</span></div>
@@ -328,7 +313,7 @@
 
             <div class="hint">
               <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Votre compte patient sera créé via l'API <strong>/api/auth/register</strong>.
+              Votre compte sera créé puis activé via le lien de confirmation reçu par e-mail.
             </div>
           </div>
         </div>
@@ -364,8 +349,8 @@
 </div>
 
 <footer>
-  <a href="#">Mentions légales</a> · <a href="#">Politique de confidentialité</a> · <a href="#">Aide</a>
-  &nbsp;·&nbsp; Hébergement certifié <strong>HDS</strong> · © 2024 MediCare31
+  <a href="legal.html#mentions" target="_blank" rel="noopener">Mentions légales</a> · <a href="legal.html#confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a> · <a href="legal.html#aide" target="_blank" rel="noopener">Aide</a>
+  &nbsp;·&nbsp; Hébergement certifié <strong>HDS</strong> · © <span data-year>2026</span> MediCare31
 </footer>
 
 <script src="js/register.js"></script>

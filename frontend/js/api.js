@@ -12,7 +12,10 @@
   const AUTH_TOKEN_KEY = 'medicare_token';
 
   async function request(endpoint, options = {}) {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    // La session peut être dans localStorage (connexion durable) ou
+    // sessionStorage (jusqu'à la fermeture du navigateur).
+    const token =
+      localStorage.getItem(AUTH_TOKEN_KEY) || sessionStorage.getItem(AUTH_TOKEN_KEY);
 
     // 1. Setup Headers
     const headers = {
@@ -36,8 +39,10 @@
 
       // 3. Handle Authorization Errors
       if (response.status === 401) {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem('medicare_user');
+        [AUTH_TOKEN_KEY, 'medicare_user', 'access_token', 'token_type'].forEach((k) => {
+          localStorage.removeItem(k);
+          sessionStorage.removeItem(k);
+        });
         window.location.replace('/login.html');
         throw new Error('Session expirée. Veuillez vous reconnecter.');
       }
@@ -83,21 +88,42 @@
     });
   }
 
+  // Helper for PATCH requests
+  async function patch(endpoint, body) {
+    return request(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
   // Helper for DELETE requests
   async function del(endpoint) {
     return request(endpoint, { method: 'DELETE' });
   }
 
   // UI Notification Helper
-  function notify(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toastMsg');
+  function ensureToast() {
+    let toast = document.getElementById('toast');
+    let toastMsg = document.getElementById('toastMsg');
 
-    if (!toast || !toastMsg) {
-      // Fallback to alert if toast element doesn't exist on current page
-      alert(message);
-      return;
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast';
+      toast.innerHTML = '<span id="toastMsg"></span>';
+      document.body.appendChild(toast);
+      toastMsg = document.getElementById('toastMsg');
+    } else if (!toastMsg) {
+      toastMsg = document.createElement('span');
+      toastMsg.id = 'toastMsg';
+      toast.appendChild(toastMsg);
     }
+
+    return { toast, toastMsg };
+  }
+
+  function notify(message, type = 'info') {
+    const { toast, toastMsg } = ensureToast();
 
     toastMsg.textContent = message;
     toast.className = `toast show toast-${type}`;
@@ -107,5 +133,5 @@
     }, 3000);
   }
 
-  window.api = { get, post, put, del, request, notify };
+  window.api = { get, post, put, patch, del, request, notify };
 })();

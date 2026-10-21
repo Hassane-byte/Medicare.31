@@ -1,4 +1,3 @@
-authGuard();
 // ═══════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════
@@ -64,35 +63,19 @@ let visibleDoctors = new Set();
 // ═══════════════════════════════════════════════
 // API HELPERS
 // ═══════════════════════════════════════════════
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("medicare_token");
-  return token ? { Authorization: `Bearer ${token}`, ...extra } : { ...extra };
-}
 
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: authHeaders() });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return api.get(url);
 }
 
 async function apiJson(url, method, body) {
-  const res = await fetch(url, {
-    method,
-    headers: authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    let message = "Erreur serveur";
-    try {
-      const data = await res.json();
-      message =
-        typeof data.detail === "string"
-          ? data.detail
-          : JSON.stringify(data.detail || data);
-    } catch (_) {}
-    throw new Error(message);
-  }
-  return res.status === 204 ? null : res.json();
+  const verb = String(method || "GET").toUpperCase();
+  if (verb === "GET") return api.get(url);
+  if (verb === "POST") return api.post(url, body);
+  if (verb === "PUT") return api.put(url, body);
+  if (verb === "PATCH") return api.patch(url, body);
+  if (verb === "DELETE") return api.del(url);
+  return api.request(url, { method: verb, body: JSON.stringify(body) });
 }
 
 function escapeHtml(value) {
@@ -113,10 +96,10 @@ async function loadReferenceData() {
   if (isPatient) return;
 
   const [staff, types, rooms, patients] = await Promise.all([
-    fetchJson("/api/appointments/staff").catch(() => []),
-    fetchJson("/api/appointments/types").catch(() => []),
-    fetchJson("/api/appointments/rooms").catch(() => []),
-    fetchJson("/api/patients?limit=100").catch(() => []),
+    api.get("/api/appointments/staff"),
+    api.get("/api/appointments/types"),
+    api.get("/api/appointments/rooms"),
+    api.get("/api/patients?limit=100"),
   ]);
 
   staffList = Array.isArray(staff) ? staff : [];
@@ -124,7 +107,12 @@ async function loadReferenceData() {
   roomList = Array.isArray(rooms) ? rooms : [];
   patientList = Array.isArray(patients) ? patients : [];
 
-  patientByName = new Map(patientList.map((p) => [displayName(p), p]));
+  // Index sur le nom, mais on garde l'identifiant pour éviter les homonymes.
+  patientByName = new Map();
+  patientList.forEach((p) => {
+    const key = displayName(p);
+    if (!patientByName.has(key)) patientByName.set(key, p);
+  });
 
   DOCTORS = staffList
     .filter((s) => s.type_staff === "medecin")
@@ -160,6 +148,12 @@ function populateModalOptions() {
           `<option value="${t.id_appointment_type}">${escapeHtml(t.libelle)}</option>`,
       )
       .join("");
+
+  // La durée par défaut suit le type de consultation choisi.
+  typeSel.addEventListener("change", () => {
+    const start = document.getElementById("mStart").value;
+    if (start) document.getElementById("mEnd").value = addMins(start, defaultDuration());
+  });
 
   document.getElementById("patientList").innerHTML = patientList
     .map((p) => `<option value="${escapeHtml(displayName(p))}"></option>`)
@@ -238,6 +232,11 @@ async function init() {
   renderView();
   updateCurrentTimeLine();
   setInterval(updateCurrentTimeLine, 60000);
+
+  // ?new=1 ouvre directement le formulaire de création (lien depuis un dashboard)
+  if (new URLSearchParams(window.location.search).get("new") === "1") {
+    openModal();
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -333,7 +332,7 @@ function renderWeek() {
       .map((d) => {
         const isToday = d.getTime() === today.getTime();
         return `<div class="week-header-day">
-              <div class="week-day-name">${DAYS_SHORT[((d.getDay() + 6) % 7) + 1 > 6 ? 0 : (d.getDay() + 6) % 7]}</div>
+              <div class="week-day-name">${DAYS_SHORT[(d.getDay() + 6) % 7]}</div>
               <div class="week-day-num${isToday ? " today" : ""}">${d.getDate()}</div>
             </div>`;
       })
@@ -616,6 +615,14 @@ function updateCurrentTimeLine() {
 // ═══════════════════════════════════════════════
 // MODAL
 // ═══════════════════════════════════════════════
+
+/** Durée par défaut du rendez-vous, pilotée par le type de consultation. */
+function defaultDuration() {
+  const typeId = document.getElementById("mType").value;
+  const type = typeList.find((t) => String(t.id_appointment_type) === String(typeId));
+  return type && type.duree_par_defaut_min ? type.duree_par_defaut_min : 30;
+}
+
 function openModal(date, startTime) {
   if (isPatient) {
     showToast("La prise de rendez-vous est réservée au personnel.");
@@ -636,8 +643,8 @@ function openModal(date, startTime) {
   document.getElementById("mDate").value = date || fmtDate(currentDate);
   document.getElementById("mStart").value = startTime || "09:00";
   document.getElementById("mEnd").value = startTime
-    ? addMins(startTime, 30)
-    : "09:30";
+    ? addMins(startTime, defaultDuration())
+    : addMins("09:00", defaultDuration());
 
   document.querySelectorAll(".status-opt").forEach((o) => {
     o.classList.toggle("sel", o.textContent === "Confirmé");
@@ -712,18 +719,18 @@ async function saveAppt() {
   const roomName = document.getElementById("mRoom").value.trim();
 
   if (!patientName || !doctorId || !typeId || !date || !start || !end) {
-    showToast("Veuillez remplir les champs obligatoires.", false);
+    showToast("Veuillez remplir les champs obligatoires.", "error");
     return;
   }
 
   const patient = patientByName.get(patientName);
   if (!patient) {
-    showToast("Patient introuvable : choisissez-le dans la liste.", false);
+    showToast("Patient introuvable : choisissez-le dans la liste.", "error");
     return;
   }
 
   if (end <= start) {
-    showToast("L'heure de fin doit suivre l'heure de début.", false);
+    showToast("L'heure de fin doit suivre l'heure de début.", "error");
     return;
   }
 
@@ -754,7 +761,7 @@ async function saveAppt() {
     closeModalBtn();
     await refresh();
   } catch (err) {
-    showToast(err.message || "Erreur lors de l'enregistrement.", false);
+    showToast(err.message || "Erreur lors de l'enregistrement.", "error");
   }
 }
 
@@ -766,7 +773,7 @@ async function deleteAppt() {
     showToast("Rendez-vous supprimé");
     await refresh();
   } catch (err) {
-    showToast(err.message || "Erreur lors de la suppression.", false);
+    showToast(err.message || "Erreur lors de la suppression.", "error");
   }
 }
 
@@ -812,7 +819,7 @@ function showDetail(a, e) {
       showToast("Rendez-vous supprimé");
       await refresh();
     } catch (err) {
-      showToast(err.message || "Erreur lors de la suppression.", false);
+      showToast(err.message || "Erreur lors de la suppression.", "error");
     }
   };
 
@@ -844,9 +851,13 @@ document.addEventListener("keydown", (e) => {
 // ═══════════════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════════════
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById("toast");
-  document.getElementById("toastMsg").textContent = msg;
+  const msgEl = document.getElementById("toastMsg");
+  if (!t || !msgEl) return;
+  msgEl.textContent = msg;
+  t.classList.remove("toast-success", "toast-error");
+  t.classList.add(type === "error" ? "toast-error" : "toast-success");
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
 }
@@ -884,7 +895,16 @@ function addMins(t, n) {
 
 // auto-adjust end time when start changes
 document.getElementById("mStart").addEventListener("change", function () {
-  document.getElementById("mEnd").value = addMins(this.value, 30);
+  document.getElementById("mEnd").value = addMins(this.value, defaultDuration());
 });
 
-init();
+App.init().then(async (ready) => {
+  if (!ready) return;
+
+  // Un patient consulte son agenda : il ne peut pas créer de rendez-vous.
+  if (isPatient) {
+    document.getElementById("btnAddAppt")?.classList.add("hidden");
+  }
+
+  await init();
+});

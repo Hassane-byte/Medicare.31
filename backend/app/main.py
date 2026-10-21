@@ -8,6 +8,7 @@ import app.models  # noqa: F401
 
 from app.routers import auth, patients, messages, appointments
 from app.routers import tasks, notifications, documents, medical, calls, dashboard, statistiques
+from app.routers import attachments
 
 
 def _seed_roles() -> None:
@@ -77,6 +78,7 @@ app.include_router(medical.router)
 app.include_router(calls.router)
 app.include_router(dashboard.router)
 app.include_router(statistiques.router)
+app.include_router(attachments.router)
 
 @app.get("/api/health")
 def health():

@@ -1,4 +1,6 @@
-from datetime import date
+from datetime import date, datetime, timedelta
+import hashlib
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -9,7 +11,15 @@ from sqlalchemy.sql import func
 from app.db import get_db
 from app.models.user import User
 from app.models.role import Role
-from app.schemas.user import UserCreate, UserOut, Token, PatientRegister
+from app.models.password_reset import PasswordReset
+from app.schemas.user import (
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    UserCreate,
+    UserOut,
+    Token,
+    PatientRegister,
+)
 from app.services.auth import (
     hash_password,
     verify_password,
@@ -314,3 +324,100 @@ def ping(
     db.commit()
 
     return {"status": "ok"}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# RÉINITIALISATION DU MOT DE PASSE
+# ═══════════════════════════════════════════════════════════════════
+
+RESET_DURATION_HOURS = 2
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+@router.post("/password-reset/request")
+def request_password_reset(
+    data: PasswordResetRequest,
+    db: Session = Depends(get_db),
+):
+    """Envoie un e-mail de réinitialisation.
+
+    La réponse est toujours identique, que l'adresse existe ou non : cela
+    évite d'énumérer les comptes enregistrés.
+    """
+    email = data.email.lower().strip()
+    user = db.query(User).filter(User.email == email).first()
+
+    message = (
+        "Si un compte est associé à cette adresse, un e-mail de réinitialisation "
+        "vient d'être envoyé."
+    )
+
+    if not user or not user.is_active:
+        return {"message": message}
+
+    # On invalide les demandes précédentes encore ouvertes.
+    db.query(PasswordReset).filter(
+        PasswordReset.id_user == user.id_user,
+        PasswordReset.used.is_(False),
+    ).update({"used": True}, synchronize_session=False)
+
+    raw_token = secrets.token_urlsafe(32)
+    db.add(
+        PasswordReset(
+            id_user=user.id_user,
+            token_hash=_hash_token(raw_token),
+            expires_at=datetime.utcnow() + timedelta(hours=RESET_DURATION_HOURS),
+            used=False,
+        )
+    )
+    db.commit()
+
+    try:
+        from app.services.email import send_password_reset_email
+
+        send_password_reset_email(email, user.role.code_role, raw_token)
+    except Exception as exc:  # pragma: no cover - dépend de la configuration SMTP
+        print(f"[email] envoi impossible : {exc}")
+
+    return {"message": message}
+
+
+@router.get("/password-reset/validate")
+def validate_password_reset(token: str, db: Session = Depends(get_db)) -> dict:
+    """Vérifie qu'un jeton de réinitialisation est encore valable."""
+    reset = (
+        db.query(PasswordReset)
+        .filter(PasswordReset.token_hash == _hash_token(token))
+        .first()
+    )
+    if not reset or reset.used or reset.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Ce lien est invalide ou a expiré.")
+    return {"valid": True}
+
+
+@router.post("/password-reset/confirm")
+def confirm_password_reset(
+    data: PasswordResetConfirm,
+    db: Session = Depends(get_db),
+):
+    """Applique un nouveau mot de passe."""
+    reset = (
+        db.query(PasswordReset)
+        .filter(PasswordReset.token_hash == _hash_token(data.token))
+        .first()
+    )
+    if not reset or reset.used or reset.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Ce lien est invalide ou a expiré.")
+
+    user = db.query(User).filter(User.id_user == reset.id_user).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Compte introuvable.")
+
+    user.password_hash = hash_password(data.password)
+    reset.used = True
+    db.commit()
+
+    return {"message": "Mot de passe mis à jour. Vous pouvez vous connecter."}

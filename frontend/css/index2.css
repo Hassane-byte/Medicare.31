@@ -474,3 +474,14 @@
 
   .doc-chev { stroke: var(--text-light); fill: none; width: 14px; height: 14px; }
 
+
+  /* Boutons dresses comme les liens de bas de carte */
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+  }

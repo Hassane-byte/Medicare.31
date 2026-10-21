@@ -1420,3 +1420,90 @@ aside {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* ── Recherche dans la conversation ──────────────────────────────────────── */
+
+.chat-search {
+  width: 150px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  background: var(--white);
+  color: var(--text-dark);
+}
+
+.chat-search:focus {
+  outline: none;
+  border-color: var(--blue-light);
+}
+
+/* ── Réponse à un message ────────────────────────────────────────────────── */
+
+.msg-reply {
+  border: none;
+  background: none;
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 10px;
+  padding: 0;
+}
+
+.msg-reply:hover { color: var(--blue-mid); text-decoration: underline; }
+
+/* ── Pièces jointes ──────────────────────────────────────────────────────── */
+
+.bubble-files { margin-top: 5px; display: flex; flex-direction: column; gap: 4px; }
+
+.bubble-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.16);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: inherit;
+  text-decoration: none;
+  max-width: 260px;
+}
+
+.bubble-file svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; flex: none; }
+.bubble-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bubble-file em { opacity: .7; font-style: normal; font-size: 11px; }
+
+.shared-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--text-mid);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.shared-file:hover { color: var(--blue-mid); }
+.shared-file svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex: none; }
+
+.pending-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-mid);
+  padding: 4px 8px 8px;
+}
+
+.pending-file-clear {
+  border: none;
+  background: none;
+  color: var(--text-light);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.pending-file-clear:hover { color: var(--red); }

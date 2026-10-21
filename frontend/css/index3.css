@@ -450,3 +450,86 @@
     .page-header { align-items: flex-start; flex-direction: column; }
     .stats-row { grid-template-columns: 1fr; }
   }
+
+/* ── Modale : enregistrement d'une arrivée ──────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 40, 70, .45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-checkin {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 50px rgba(20, 40, 70, .28);
+  width: min(520px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-weight: 800;
+  font-size: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+  border: none;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+.modal-close:hover { color: var(--text-dark); }
+
+.modal-body { padding: 16px 20px 20px; overflow-y: auto; }
+
+.modal-hint {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-bottom: 12px;
+}
+
+.checkin-item {
+  display: grid;
+  grid-template-columns: 58px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.checkin-time { font-weight: 700; color: var(--blue-dark); }
+.checkin-name { font-weight: 600; color: var(--text-dark); }
+.checkin-type { color: var(--text-light); font-size: 12.5px; }
+
+.btn-save {
+  background: var(--blue-dark);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.btn-save:hover { background: var(--blue-mid); }

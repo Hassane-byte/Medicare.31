@@ -7,10 +7,13 @@ let currentFolder = "inbox";
 let replyMsg = null;
 let selectedContact = null;
 
-window.__blockConvClick = false;
-
 function token() {
-  return localStorage.getItem("medicare_token") || localStorage.getItem("access_token");
+  return (
+    localStorage.getItem("medicare_token") ||
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("medicare_token") ||
+    sessionStorage.getItem("access_token")
+  );
 }
 
 function authHeaders(extra = {}) {
@@ -20,7 +23,7 @@ function authHeaders(extra = {}) {
   };
 }
 
-async function api(path, options = {}) {
+async function apiRequest(path, options = {}) {
   const response = await fetch(path, {
     ...options,
     headers: authHeaders(options.headers || {})
@@ -29,13 +32,24 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (response.status === 401) {
-    localStorage.clear();
+    // On ne purge que les clés de session, pas le stockage local complet.
+    [
+      "medicare_token", "medicare_user", "access_token", "token_type",
+      "user_role", "role", "user_nom", "user_prenom",
+    ].forEach((k) => {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    });
     window.location.href = "login.html";
     throw new Error("Not authenticated");
   }
 
   if (!response.ok) {
-    throw new Error(data.detail || "Erreur API");
+    throw new Error(
+      typeof data.detail === "object"
+        ? JSON.stringify(data.detail)
+        : data.detail || "Erreur API"
+    );
   }
 
   return data;
@@ -59,13 +73,15 @@ function initials(name) {
 }
 
 function roleLabel(role) {
-  if (role === "medecin") return "Médecin";
-  if (role === "secretariat") return "Secrétariat";
-  if (role === "patient") return "Patient";
-  if (role === "admin") return "Admin";
-  if (role === "patients") return "Patient";
-  if (role === "equipe") return "Équipe";
-  return role || "Utilisateur";
+  // Libellés issus de la table des rôles, avec un repli lisible.
+  if (typeof ROLE_LABELS !== "undefined" && ROLE_LABELS[role]) {
+    return ROLE_LABELS[role];
+  }
+  const fallback = {
+    patients: "Patient",
+    equipe: "Équipe",
+  };
+  return fallback[role] || role || "Utilisateur";
 }
 
 function avatarColor(id) {
@@ -172,24 +188,19 @@ function isEquipeConversation(conv) {
 }
 
 async function init() {
-  if (!token()) {
-    window.location.href = "login.html";
-    return;
-  }
+  const ready = await App.init();
 
-  try {
-    currentUser = await api("/api/auth/me");
-  } catch (error) {
-    console.error("Erreur auth/me:", error);
-    showToast(error.message || "Erreur d'authentification");
-    return;
-  }
+  if (!ready) return;
+
+  currentUser = App.me || (await apiRequest("/api/auth/me"));
 
   startHeartbeat();
   updateLoggedUserUI();
 
+  document.getElementById("fileInput")?.addEventListener("change", onFileSelected);
+
   try {
-    users = await api("/api/messages/users");
+    users = await apiRequest("/api/messages/users");
   } catch (error) {
     console.error("Erreur chargement utilisateurs:", error);
   }
@@ -209,7 +220,7 @@ function startHeartbeat() {
 
 async function pingOnline() {
   try {
-    await api("/api/auth/ping", {
+    await apiRequest("/api/auth/ping", {
       method: "POST"
     });
   } catch (error) {
@@ -238,7 +249,7 @@ async function loadConversations(archived = false) {
   currentFolder = archived ? "archive" : "inbox";
   currentConv = null;
 
-  conversations = await api(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
+  conversations = await apiRequest(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
   conversations.sort(sortConversations);
 
   await updateFolderCounts();
@@ -341,12 +352,12 @@ function onComposeToClear() {
 
 async function getActiveAndArchivedConversationsForCounts() {
   const activePromise = currentFolder === "archive"
-    ? api("/api/messages/conversations?archived=false")
+    ? apiRequest("/api/messages/conversations?archived=false")
     : Promise.resolve(conversations);
 
   const archivedPromise = currentFolder === "archive"
     ? Promise.resolve(conversations)
-    : api("/api/messages/conversations?archived=true");
+    : apiRequest("/api/messages/conversations?archived=true");
 
   const [active, archived] = await Promise.all([activePromise, archivedPromise]);
 
@@ -358,16 +369,14 @@ async function updateFolderCounts() {
     const { active, archived } = await getActiveAndArchivedConversationsForCounts();
 
     const activeUnreadCount = active.filter(isUnread).length;
-    const archivedUnreadCount = archived.filter(isUnread).length;
     const urgentCount = active.filter(c => c.priority === "urgent").length;
     const sentCount = active.filter(c => currentUser && c.created_by_user_id === currentUser.id_user).length;
 
     setFolderCount("inbox", active.length, true);
     setFolderCount("sent", sentCount, true);
     setFolderCount("urgent", urgentCount, true);
-    setFolderCount("archive", archivedUnreadCount, false);
+    setFolderCount("archive", archived.length, true);
 
-    updateUnreadFolderLabel(activeUnreadCount);
     updateSideMessageBadge(activeUnreadCount);
   } catch (error) {
     console.error("Counts error:", error);
@@ -375,21 +384,12 @@ async function updateFolderCounts() {
 }
 
 function setFolderCount(folder, count, showZero = true) {
-  const item = document.querySelector(`.folder-item[onclick*="'${folder}'"] .folder-count`);
+  const item = document.querySelector(`.folder-item[data-folder="${folder}"] .folder-count`);
 
   if (!item) return;
 
   item.textContent = count;
   item.style.display = count > 0 || showZero ? "inline-flex" : "none";
-}
-
-function updateUnreadFolderLabel(count) {
-  const item = document.querySelector(`.folder-item[onclick*="'unread'"] .folder-count`);
-
-  if (!item) return;
-
-  item.textContent = count;
-  item.style.display = count > 0 ? "inline-flex" : "none";
 }
 
 function updateSideMessageBadge(count) {
@@ -490,7 +490,7 @@ document.addEventListener("click", () => {
 
 async function archiveConversationById(threadId) {
   try {
-    await api(`/api/messages/conversations/${threadId}/archive`, {
+    await apiRequest(`/api/messages/conversations/${threadId}/archive`, {
       method: "PATCH"
     });
 
@@ -513,7 +513,7 @@ async function archiveConversationById(threadId) {
 
 async function unarchiveConversationById(threadId) {
   try {
-    await api(`/api/messages/conversations/${threadId}/archive?archived=false`, {
+    await apiRequest(`/api/messages/conversations/${threadId}/archive?archived=false`, {
       method: "PATCH"
     });
 
@@ -539,7 +539,7 @@ async function deleteConversationById(threadId) {
   if (!ok) return;
 
   try {
-    await api(`/api/messages/conversations/${threadId}`, {
+    await apiRequest(`/api/messages/conversations/${threadId}`, {
       method: "DELETE"
     });
 
@@ -562,7 +562,7 @@ async function deleteConversationById(threadId) {
 
 async function openConv(threadId) {
   try {
-    const conv = await api(`/api/messages/conversations/${threadId}`);
+    const conv = await apiRequest(`/api/messages/conversations/${threadId}`);
     currentConv = conv;
 
     const index = conversations.findIndex(c => c.id_thread === threadId);
@@ -642,9 +642,13 @@ function renderChatHeader(conv) {
     </div>
 
     <div class="chat-header-actions">
-      <button class="icon-btn" title="Rechercher" onclick="showToast('Recherche bientôt disponible')">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
+      <input
+        class="chat-search"
+        id="chatSearch"
+        type="search"
+        placeholder="Rechercher…"
+        oninput="searchInConversation()"
+      />
 
       ${archiveButton}
 
@@ -653,6 +657,52 @@ function renderChatHeader(conv) {
       </button>
     </div>
   `;
+}
+
+/** Filtre les messages affichés à partir de la recherche dans l'en-tête. */
+function searchInConversation() {
+  const input = document.getElementById("chatSearch");
+  const body = document.getElementById("chatBody");
+
+  if (!input || !body) return;
+
+  const needle = input.value.trim().toLowerCase();
+
+  body.querySelectorAll(".msg-group").forEach(group => {
+    group.classList.toggle("hidden", !!needle && !group.textContent.toLowerCase().includes(needle));
+  });
+
+  let visible = 0;
+  body.querySelectorAll(".msg-group").forEach(g => { if (!g.classList.contains("hidden")) visible++; });
+
+  let empty = body.querySelector(".search-empty");
+  if (!visible && needle) {
+    if (!empty) {
+      empty = document.createElement("div");
+      empty.className = "search-empty";
+      empty.style.cssText = "padding:20px;text-align:center;color:var(--text-light);font-size:.82rem";
+      body.appendChild(empty);
+    }
+    empty.textContent = `Aucun message ne contient « ${needle} »`;
+    empty.classList.remove("hidden");
+  } else if (empty) {
+    empty.classList.add("hidden");
+  }
+}
+
+/** Pré-remplit la réponse à un message. */
+function startReply(id, name, text) {
+  replyMsg = { id_message: id };
+
+  const banner = document.getElementById("replyBanner");
+  const nameEl = document.getElementById("replyName");
+  const textEl = document.getElementById("replyText");
+
+  if (nameEl) nameEl.textContent = name;
+  if (textEl) textEl.textContent = text;
+  if (banner) banner.classList.add("show");
+
+  document.getElementById("msgInput")?.focus();
 }
 
 function renderMessages(conv) {
@@ -679,6 +729,13 @@ function renderMessages(conv) {
       lastDate = d;
     }
 
+    const attachments = (m.attachments || []).map(a => `
+      <a class="bubble-file" href="${escapeHtml(a.file_url || "#")}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>${escapeHtml(a.file_name || "Pièce jointe")}</span>
+        ${a.file_size_kb ? `<em>${a.file_size_kb} Ko</em>` : ""}
+      </a>`).join("");
+
     html += `
       <div class="msg-group ${isMe ? "outgoing" : "incoming"}">
         ${!isMe ? `<div class="msg-sender-name">${escapeHtml(senderName)}</div>` : ""}
@@ -688,9 +745,11 @@ function renderMessages(conv) {
 
           <div>
             <div class="bubble">${escapeHtml(m.body)}</div>
+            ${attachments ? `<div class="bubble-files">${attachments}</div>` : ""}
             <div class="msg-time-small">
               ${escapeHtml(messageTime(m.sent_at))}
               ${isMe ? '<span class="msg-status">✓✓</span>' : ""}
+              <button type="button" class="msg-reply" onclick="startReply(${m.id_message}, '${escapeHtml(senderName).replace(/'/g, "\\'")}', '${escapeHtml(String(m.body || "").slice(0, 90)).replace(/'/g, "\\'")}')">Répondre</button>
             </div>
           </div>
         </div>
@@ -749,7 +808,17 @@ function renderInfoPanel(conv) {
   const files = document.getElementById("sharedFilesList");
 
   if (files) {
-    files.innerHTML = `<div style="font-size:.78rem;color:var(--text-light)">Aucun fichier partagé</div>`;
+    const attachments = (conv.messages || [])
+      .flatMap(m => m.attachments || [])
+      .map(a => `
+        <a class="shared-file" href="${escapeHtml(a.file_url || "#")}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>${escapeHtml(a.file_name || "Pièce jointe")}</span>
+        </a>`)
+      .join("");
+
+    files.innerHTML = attachments
+      || `<div style="font-size:.78rem;color:var(--text-light)">Aucun fichier partagé</div>`;
   }
 }
 
@@ -760,21 +829,24 @@ async function sendMessage() {
 
   const text = input.value.trim();
 
-  if (!text || !currentConv) return;
+  if ((!text && !pendingFile) || !currentConv) return;
 
   try {
-    await api(`/api/messages/conversations/${currentConv.id_thread}/messages`, {
+    const created = await apiRequest(`/api/messages/conversations/${currentConv.id_thread}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        body: text,
-        is_urgent: false
+        body: text || "(pièce jointe)",
+        is_urgent: false,
+        reply_to_message_id: replyMsg ? replyMsg.id_message : null
       })
     });
 
     input.value = "";
     input.style.height = "auto";
     closeReply();
+
+    await uploadPendingFile(created && created.id_message);
 
     await openConv(currentConv.id_thread);
     await refreshConversationsKeepCurrent();
@@ -808,7 +880,7 @@ async function sendComposed() {
   }
 
   try {
-    await api("/api/messages/conversations", {
+    await apiRequest("/api/messages/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -844,7 +916,7 @@ async function sendComposed() {
 async function refreshConversationsKeepCurrent() {
   const archived = currentFolder === "archive";
 
-  conversations = await api(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
+  conversations = await apiRequest(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
   conversations.sort(sortConversations);
 
   await updateFolderCounts();
@@ -942,7 +1014,7 @@ async function setFolder(el, folder) {
 
   const archived = folder === "archive";
 
-  conversations = await api(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
+  conversations = await apiRequest(`/api/messages/conversations?archived=${archived ? "true" : "false"}`);
   conversations.sort(sortConversations);
 
   await updateFolderCounts();
@@ -960,7 +1032,7 @@ async function openCompose() {
 
   if (!currentUser) {
     try {
-      currentUser = await api("/api/auth/me");
+      currentUser = await apiRequest("/api/auth/me");
       updateLoggedUserUI();
     } catch (error) {
       console.error("Erreur chargement utilisateur courant:", error);
@@ -969,7 +1041,7 @@ async function openCompose() {
 
   if (!users.length) {
     try {
-      users = await api("/api/messages/users");
+      users = await apiRequest("/api/messages/users");
     } catch (error) {
       console.error("Erreur chargement contacts:", error);
     }
@@ -998,8 +1070,61 @@ function toggleInfo() {
   if (panel) panel.classList.toggle("hidden");
 }
 
-function simulateAttach() {
-  showToast("Pièces jointes bientôt disponibles avec l'API");
+/* ── Pièces jointes ───────────────────────────────────────────────────────── */
+
+let pendingFile = null;
+
+function attachFile() {
+  const input = document.getElementById("fileInput");
+
+  if (!input) return;
+
+  input.value = "";
+  input.click();
+}
+
+function onFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  const banner = document.getElementById("pendingFile");
+
+  if (!file) {
+    pendingFile = null;
+    if (banner) banner.classList.add("hidden");
+    return;
+  }
+
+  pendingFile = file;
+
+  if (banner) {
+    banner.classList.remove("hidden");
+    banner.innerHTML = `Pièce jointe : ${escapeHtml(file.name)}
+      <button type="button" class="pending-file-clear" title="Retirer">&times;</button>`;
+    banner.querySelector(".pending-file-clear").addEventListener("click", () => {
+      pendingFile = null;
+      banner.classList.add("hidden");
+    });
+  }
+}
+
+async function uploadPendingFile(messageId) {
+  if (!pendingFile || !messageId) return;
+
+  const form = new FormData();
+  form.append("file", pendingFile);
+
+  try {
+    await apiRequest(`/api/messages/attachments/message/${messageId}`, {
+      method: "POST",
+      body: form
+    });
+    showToast("Pièce jointe envoyée");
+  } catch (error) {
+    showToast(error.message || "Envoi de la pièce jointe impossible");
+  } finally {
+    pendingFile = null;
+    const banner = document.getElementById("pendingFile");
+    if (banner) banner.classList.add("hidden");
+  }
 }
 
 function showToast(msg) {

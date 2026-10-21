@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediCare31 – Statistiques</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/statistiques.css" />
+  </head>
+  <body>
+    <nav>
+      <a class="logo" href="index.html">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L4 6v6c0 5.25 3.5 10.14 8 11.35C16.5 22.14 20 17.25 20 12V6l-8-4z" />
+            <rect x="10" y="7" width="4" height="10" rx="1" />
+            <rect x="7" y="10" width="10" height="4" rx="1" />
+          </svg>
+        </div>
+        MediCare31
+      </a>
+
+      <div class="nav-right">
+        <button class="notif-btn" title="Notifications" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        </button>
+
+        <div class="user-chip" data-logout title="Se déconnecter">
+          <div class="avatar" id="user-nav-avatar">?</div>
+          <span id="user-nav-name">Chargement…</span>
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" /></svg>
+        </div>
+      </div>
+    </nav>
+
+    <div class="app">
+      <aside>
+        <ul class="side-nav">
+          <li><a href="index.html">Tableau de bord</a></li>
+          <li><a href="calendrier.html">Agenda</a></li>
+          <li><a href="patients.html">Patients</a></li>
+          <li><a href="messagerie.html">Messagerie</a></li>
+          <li><a href="documents.html">Documents</a></li>
+          <li><a href="statistiques.html">Statistiques</a></li>
+        </ul>
+      </aside>
+
+      <main>
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Statistiques</h1>
+            <p>Activité du cabinet et suivi des patients.</p>
+          </div>
+          <div class="quick-actions">
+            <button class="btn-secondary" type="button" id="btnRefresh">Actualiser</button>
+          </div>
+        </div>
+
+        <div class="stats-row" id="kpiRow"></div>
+
+        <div class="content-grid stats-grid">
+          <div class="card">
+            <div class="card-title">Évolution des rendez-vous (12 semaines)</div>
+            <div id="evolutionChart" class="chart"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Répartition des patients</div>
+            <div id="repartitionPatients" class="chart"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Consultations par type</div>
+            <div id="repartitionTypes" class="chart"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Charge par praticien (ce mois)</div>
+            <div id="parPraticien" class="chart"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/roles.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/statistiques.js"></script>
+  </body>
+</html>

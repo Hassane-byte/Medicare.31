@@ -53,3 +53,12 @@ class Token(BaseModel):
     role: str
     nom: str | None = ""
     prenom: str | None = ""
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8, description="Le mot de passe doit contenir au moins 8 caractères")

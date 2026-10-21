@@ -22,7 +22,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
 # Security: Run as non-root user
-RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN useradd -m appuser \
+    && mkdir -p /app/uploads \
+    && chown -R appuser:appuser /app
 USER appuser
 
 # Production Command

@@ -3,16 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MediCare31 – Espace Patient</title>
+    <title>MediCare31 – Mon espace santé</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
     />
     <link rel="stylesheet" href="css/index2.css" />
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
     <!-- ═══════ NAV ═══════ -->
     <nav>
-      <a class="logo" href="#">
+      <a class="logo" href="index2.html">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24">
             <path
@@ -25,7 +26,7 @@
         MediCare31
       </a>
       <div class="nav-right">
-        <button class="notif-btn" title="Notifications">
+        <button class="notif-btn" title="Notifications" type="button">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -37,12 +38,11 @@
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <span class="notif-badge">10</span>
         </button>
 
-        <div class="user-chip">
-          <div class="avatar">MD</div>
-          <span>Marc Dupont</span>
+        <div class="user-chip" data-logout title="Se déconnecter">
+          <div class="avatar" id="user-nav-avatar">?</div>
+          <span id="user-nav-name">Chargement…</span>
           <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" /></svg>
         </div>
       </div>
@@ -54,7 +54,7 @@
       <aside>
         <ul class="side-nav">
           <li class="active">
-            <a href="#">
+            <a href="index2.html">
               <svg viewBox="0 0 24 24">
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -65,9 +65,9 @@
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="calendrier.html">
               <svg viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
@@ -76,12 +76,12 @@
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="documents.html">
               <svg viewBox="0 0 24 24">
-                <path
-                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                />
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
               Mes documents
             </a>
@@ -89,9 +89,7 @@
           <li>
             <a href="messagerie.html">
               <svg viewBox="0 0 24 24">
-                <path
-                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                />
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               Ma messagerie
             </a>
@@ -136,54 +134,35 @@
               </svg>
             </div>
 
-            <div class="rdv-date">Lundi 3 juin 2024</div>
-            <div class="rdv-time">14:00</div>
-            <div class="rdv-type">Consultation Générale</div>
-            <div class="rdv-doctor">
-              <strong>Dr. Jean Martin</strong> - Médecin Généraliste
-            </div>
-            <div class="rdv-address">
-              Clinique Saint-Louis<br />50 Avenue de la Santé - 31000 Toulouse
-            </div>
+            <div class="rdv-date" id="rdvDate">—</div>
+            <div class="rdv-time" id="rdvTime">—</div>
+            <div class="rdv-type" id="rdvType">—</div>
+            <div class="rdv-doctor" id="rdvDoctor">—</div>
+            <div class="rdv-address" id="rdvAddress">—</div>
 
-            <button class="btn-primary">Gérer le rendez-vous</button>
+            <a class="btn-primary" id="rdvLink" href="calendrier.html">Gérer le rendez-vous</a>
           </div>
 
           <!-- ── HISTORIQUE MÉDICAL ── -->
           <div class="card histo-card">
             <div class="card-title">Historique Médical</div>
-            <div class="last-consult">
-              Dernier consultation: <strong>Médical</strong>
+            <div class="last-consult" id="lastConsult">
+              Aucun antécédent enregistré
             </div>
 
-            <div class="consult-row">
-              <div class="consult-avatar">JM</div>
-              <div class="consult-info">
-                <div class="consult-title">Suivi Cholestérol</div>
-                <div class="consult-doctor">Dr. Jean Martin</div>
-              </div>
-              <svg
-                class="consult-chev"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
+            <div id="consultList"></div>
 
             <div class="quick-label">Quick accès :</div>
-            <div class="quick-grid">
-              <button class="quick-btn">
+            <div class="quick-grid" id="quickGrid">
+              <button class="quick-btn" type="button" data-doc-type="analyse">
                 <svg viewBox="0 0 24 24">
                   <path
-                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 7.78-7.78-7.78-7.78z"
                   />
                 </svg>
-                <span>Carnet de santé</span>
+                <span>Résultats d'analyses</span>
               </button>
-              <button class="quick-btn active">
+              <button class="quick-btn" type="button" data-doc-type="ordonnance">
                 <svg viewBox="0 0 24 24">
                   <path
                     d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
@@ -191,11 +170,10 @@
                   <polyline points="14 2 14 8 20 8" />
                   <line x1="16" y1="13" x2="8" y2="13" />
                   <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
                 </svg>
                 <span>Ordonnances</span>
               </button>
-              <button class="quick-btn">
+              <button class="quick-btn" type="button" data-doc-type="certificat">
                 <svg viewBox="0 0 24 24">
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <line x1="8" y1="21" x2="16" y2="21" />
@@ -205,12 +183,12 @@
               </button>
             </div>
 
-            <a class="card-link" href="#">
+            <button type="button" class="card-link link-btn" id="toggleHistory">
               Voir tout l'historique médical
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
-            </a>
+            </button>
           </div>
 
           <!-- ── RIGHT COL ── -->
@@ -218,69 +196,13 @@
             <!-- MESSAGES -->
             <div class="card">
               <div class="card-title">Messages</div>
-
-              <div class="msg-row">
-                <div class="msg-avatar">JM</div>
-                <div class="msg-body">
-                  <div class="msg-top">
-                    <span class="msg-sender">Dr. Jean Martin</span>
-                    <span class="badge-unread">Non lu</span>
-                    <span class="msg-date">25 avril 2024</span>
-                  </div>
-                  <div class="msg-text">&nbsp;</div>
-                </div>
-              </div>
-
-              <div class="msg-row">
-                <div class="msg-icon-wrap">
-                  <svg
-                    viewBox="0 0 24 24"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                    />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                </div>
-                <div class="msg-body">
-                  <div class="msg-top">
-                    <span class="msg-sender">Secrétariat Clinique</span>
-                  </div>
-                  <div class="msg-text">
-                    Rendez-vous confirmé le 3 juin 2024
-                  </div>
-                </div>
-              </div>
-
-              <div class="msg-row">
-                <div class="msg-icon-wrap">
-                  <svg
-                    viewBox="0 0 24 24"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                    />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                </div>
-                <div class="msg-body">
-                  <div class="msg-top">
-                    <span class="msg-sender">Infirmière</span>
-                  </div>
-                  <div class="msg-text">Résultats du dernier bilan</div>
-                </div>
-              </div>
-
+              <div id="msgList"></div>
               <a class="card-link" href="messagerie.html">
                 Voir tous les messages
                 <svg viewBox="0 0 24 24">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
-              </a>
+              </button>
             </div>
 
             <!-- INFOS SANTÉ -->
@@ -296,7 +218,7 @@
                     />
                   </svg>
                 </div>
-                <span class="health-value">1,78 m</span>
+                <span class="health-value" id="healthTaille">—</span>
               </div>
 
               <div class="health-row">
@@ -306,7 +228,7 @@
                     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
                   </svg>
                 </div>
-                <span class="health-value">78 kg</span>
+                <span class="health-value" id="healthPoids">—</span>
               </div>
 
               <div class="health-row">
@@ -315,63 +237,24 @@
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                   </svg>
                 </div>
-                <span class="health-value">125/80 mmHg</span>
+                <span class="health-value" id="healthTension">—</span>
               </div>
 
-              <a class="btn-outline" href="#">
+              <button type="button" class="btn-outline link-btn" id="toggleHealth">
                 Voir toutes mes infos
                 <svg viewBox="0 0 24 24">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
-              </a>
+              </button>
+              <div id="healthDetails" class="hidden"></div>
             </div>
           </div>
 
           <!-- ── MES DOCUMENTS (compact) ── -->
           <div class="card docs-small">
             <div class="card-title">Mes Documents</div>
-
-            <div class="doc-row">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <line x1="3" y1="9" x2="21" y2="9" />
-                  <line x1="3" y1="15" x2="21" y2="15" />
-                  <line x1="9" y1="9" x2="9" y2="21" />
-                </svg>
-              </div>
-              <span class="doc-name">Résultats d'analyses</span>
-              <span class="doc-date">Il y a 10 min</span>
-            </div>
-
-            <div class="doc-row">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </div>
-              <span class="doc-name">Ordonnance pour médicaments</span>
-              <span class="doc-date">13/04/2024</span>
-            </div>
-
-            <div class="doc-row">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
-              </div>
-              <span class="doc-name">Certificat médical pour le travail</span>
-              <span class="doc-date">08/03/2024</span>
-            </div>
-
-            <a class="card-link" href="#">
+            <div id="docsList"></div>
+            <a class="card-link" href="documents.html">
               Voir tous les documents
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
@@ -382,73 +265,8 @@
           <!-- ── NOTIFICATIONS ── -->
           <div class="card notif-card">
             <div class="card-title">Notifications</div>
-
-            <div class="notif-row">
-              <div class="notif-icon">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-              </div>
-              <div class="notif-body">
-                <div class="notif-top">
-                  <span class="notif-sender">Rappel de rendez-vous</span>
-                  <span class="notif-time">Il y a 10 min</span>
-                </div>
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin-top: 3px;
-                  "
-                >
-                  <span class="notif-text"
-                    >Dr. Jean Martin le 3 juin à 14: 00</span
-                  >
-                  <span class="badge-new">Non ul</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="notif-row">
-              <div class="notif-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                  />
-                </svg>
-              </div>
-              <div class="notif-body">
-                <div class="notif-top">
-                  <span class="notif-sender">Secrétariat Clinique</span>
-                  <span class="notif-time">Hier</span>
-                </div>
-                <div class="notif-text">
-                  Rendez-vous confirmé pour le 3 juin 2024
-                </div>
-              </div>
-            </div>
-
-            <div class="notif-row">
-              <div class="notif-icon">
-                <svg viewBox="0 0 24 24">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                </svg>
-              </div>
-              <div class="notif-body">
-                <div class="notif-top">
-                  <span class="notif-sender">Infirmière</span>
-                  <span class="notif-time">Il y a 2 jours</span>
-                </div>
-                <div class="notif-text">Résultats du dernier bilan</div>
-              </div>
-            </div>
-
-            <a class="btn-outline" href="#">
+            <div id="notifList"></div>
+            <button type="button" class="btn-outline link-btn" id="toggleNotif">
               Voir toutes les notifications
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
@@ -456,87 +274,11 @@
             </a>
           </div>
 
-          <!-- ── MES DOCUMENTS (large / row 3) ── -->
-          <div
-            class="card"
-            style="grid-column: 1; grid-row: 3; animation-delay: 0.45s"
-          >
+          <!-- ── MES DOCUMENTS (large) ── -->
+          <div class="card docs-large">
             <div class="card-title">Mes Documents</div>
-
-            <div class="doc-row-lg">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <line x1="3" y1="9" x2="21" y2="9" />
-                  <line x1="3" y1="15" x2="21" y2="15" />
-                  <line x1="9" y1="9" x2="9" y2="21" />
-                </svg>
-              </div>
-              <span class="doc-name"
-                >Résultats d'analyses
-                <span class="doc-date-inline">02/05/2024</span></span
-              >
-              <svg
-                class="doc-chev"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
-
-            <div class="doc-row-lg">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </div>
-              <span class="doc-name"
-                >Ordonnance pour médicaments
-                <span class="doc-date-inline">15/04/2024</span></span
-              >
-              <svg
-                class="doc-chev"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
-
-            <div class="doc-row-lg">
-              <div class="doc-icon">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
-              </div>
-              <span class="doc-name"
-                >Certificat médical pour le travail
-                <span class="doc-date-inline">08/03/2024</span></span
-              >
-              <svg
-                class="doc-chev"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
-
-            <a class="card-link" href="#">
+            <div id="docsListLarge"></div>
+            <a class="card-link" href="documents.html">
               Voir tous mes documents
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
@@ -548,7 +290,9 @@
     </div>
 
     <script src="/js/auth.js"></script>
-
+    <script src="/js/roles.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
     <script src="js/index2.js"></script>
   </body>
 </html>

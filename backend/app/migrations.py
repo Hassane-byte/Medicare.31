@@ -40,6 +40,19 @@ MIGRATIONS = [
         )
         """,
     ),
+    (
+        "004_password_resets_table",
+        """
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id_reset SERIAL PRIMARY KEY,
+            id_user INTEGER NOT NULL REFERENCES users(id_user),
+            token_hash VARCHAR(128) NOT NULL UNIQUE,
+            expires_at TIMESTAMP NOT NULL,
+            used BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT now()
+        )
+        """,
+    ),
 ]
 
 

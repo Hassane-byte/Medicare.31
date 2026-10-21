@@ -375,8 +375,32 @@
   .summary-item { display: flex; flex-direction: column; gap: 2px; }
   .summary-label { font-size: .73rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: .05em; }
   .summary-value { font-size: .9rem; font-weight: 600; color: var(--text-dark); }
-  .edit-link { font-size: .77rem; color: var(--blue-mid); text-decoration: none; font-weight: 600; }
+  .edit-link {
+    font-size: .77rem;
+    color: var(--blue-mid);
+    text-decoration: none;
+    font-weight: 600;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
   .edit-link:hover { text-decoration: underline; }
+
+  /* FEEDBACK */
+  .register-feedback {
+    display: none;
+    margin: 0 0 18px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: .84rem;
+    background: #fdeaea;
+    color: #d64545;
+    border: 1px solid #f5c6c6;
+  }
+  .register-feedback.show { display: block; }
+  .register-feedback.ok { background: #e6f6ec; color: #2e9e5b; border-color: #bfe5ce; }
 
   /* SUCCESS */
   .success-view {

@@ -1,0 +1,170 @@
+/* Pages légales et de réinitialisation du mot de passe */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue-dark: #2c5f9e;
+  --blue-mid: #3a74be;
+  --text-dark: #1e2d45;
+  --text-mid: #4a5f7a;
+  --text-light: #8fa3bc;
+  --bg: #eef2f7;
+  --white: #fff;
+  --border: #d6e2f0;
+  --green: #2e9e5b;
+  --red: #d64545;
+}
+
+body {
+  font-family: 'Source Sans 3', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+body.centered {
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+  padding: 36px 38px;
+  width: min(520px, 100%);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--blue-dark);
+  margin-bottom: 22px;
+}
+
+.brand-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+h1 { font-family: 'Nunito', sans-serif; font-size: 1.45rem; margin-bottom: 8px; }
+
+.lead { color: var(--text-mid); font-size: .92rem; margin-bottom: 22px; }
+
+label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  margin: 14px 0 5px;
+}
+
+input[type="password"], input[type="email"], input[type="text"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: .93rem;
+  font-family: inherit;
+  background: var(--white);
+}
+
+input:focus { outline: none; border-color: var(--blue-mid); }
+
+.meter {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.meter span { display: block; height: 100%; width: 0; background: var(--border); transition: width .2s ease; }
+
+.strength { font-size: .78rem; color: var(--text-light); margin-top: 5px; }
+
+.feedback { min-height: 1.4em; font-size: .86rem; margin-top: 12px; color: var(--red); }
+.feedback.ok { color: var(--green); }
+
+.btn-primary {
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  background: var(--blue-dark);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-primary:hover { background: var(--blue-mid); }
+.btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+
+.back { text-align: center; margin-top: 18px; font-size: .86rem; }
+.back a { color: var(--blue-mid); text-decoration: none; font-weight: 600; }
+.back a:hover { text-decoration: underline; }
+
+/* ── Pages légales ────────────────────────────────────────────────────────── */
+
+.legal-wrap { max-width: 820px; margin: 0 auto; padding: 40px 24px 60px; }
+
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.legal-header a { color: var(--blue-mid); text-decoration: none; font-weight: 600; font-size: .88rem; }
+.legal-header a:hover { text-decoration: underline; }
+
+.legal-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .05);
+  padding: 34px 38px;
+}
+
+.legal-card h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.25rem;
+  margin: 30px 0 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.legal-card h2:first-of-type { margin-top: 12px; padding-top: 0; border-top: none; }
+
+.legal-card h3 { font-size: 1rem; margin: 18px 0 6px; }
+.legal-card p, .legal-card li { font-size: .92rem; color: var(--text-mid); }
+.legal-card ul { margin: 8px 0 12px 20px; }
+.legal-card li { margin-bottom: 5px; }
+
+.legal-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.legal-nav a {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--white);
+  color: var(--blue-mid);
+  text-decoration: none;
+  font-size: .84rem;
+  font-weight: 600;
+}
+
+.legal-nav a:hover { background: var(--blue-mid); color: #fff; border-color: var(--blue-mid); }

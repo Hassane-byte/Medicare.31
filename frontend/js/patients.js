@@ -1,4 +1,4 @@
-authGuard();
+// La page est reservee au personnel : l'acces est controle par App.init().
 
 // ═══ DATA ═══
 const COLORS = [
@@ -32,8 +32,16 @@ function escapeHtml(str) {
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded', async () => {
+  const ready = await App.init({ roles: ['medecin', 'secretariat', 'admin'] });
+  if (!ready) return;
+
   await loadStaff();
   await loadPatients();
+
+  // ?new=1 ouvre directement le formulaire de creation (lien depuis un dashboard)
+  if (new URLSearchParams(window.location.search).get('new') === '1') {
+    openModal();
+  }
 });
 
 // ═══ MEDECINS ═══

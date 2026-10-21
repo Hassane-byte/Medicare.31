@@ -8,11 +8,12 @@
       href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
     />
     <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
     <!-- ═══════════════ NAV ═══════════════ -->
     <nav>
-      <a class="logo" href="#">
+      <a class="logo" href="index.html">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24">
             <path
@@ -26,7 +27,7 @@
       </a>
 
       <div class="nav-right">
-        <button class="notif-btn" title="Notifications">
+        <button class="notif-btn" title="Notifications" type="button">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -38,10 +39,9 @@
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <span class="notif-dot"></span>
         </button>
 
-        <div class="user-chip" onclick="logout()" title="Se déconnecter">
+        <div class="user-chip" data-logout title="Se déconnecter">
           <div class="avatar" id="user-nav-avatar">?</div>
           <span id="user-nav-name">Chargement…</span>
           <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" /></svg>
@@ -89,7 +89,9 @@
           </li>
           <li>
             <a href="messagerie.html">
-              <svg viewBox="0 0 24 24">
+              <svg
+                viewBox="0 0 24 24"
+              >
                 <path
                   d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
                 />
@@ -99,7 +101,9 @@
           </li>
           <li>
             <a href="documents.html">
-              <svg viewBox="0 0 24 24">
+              <svg
+                viewBox="0 0 24 24"
+              >
                 <path
                   d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
                 />
@@ -112,7 +116,7 @@
             </a>
           </li>
           <li>
-            <a href="#">
+            <a href="statistiques.html">
               <svg viewBox="0 0 24 24">
                 <line x1="18" y1="20" x2="18" y2="10" />
                 <line x1="12" y1="20" x2="12" y2="4" />
@@ -131,14 +135,8 @@
           <div class="stat-card">
             <div class="stat-label">Rendez-vous du jour</div>
             <div class="stat-row">
-              <span class="stat-num">8</span>
-              <div class="sparkline">
-                <svg viewBox="0 0 72 30">
-                  <path
-                    d="M0,20 C8,18 14,10 20,12 C26,14 30,22 38,16 C46,10 52,18 60,14 C64,12 68,8 72,10"
-                  />
-                </svg>
-              </div>
+              <span class="stat-num" id="statRdvJour">—</span>
+              <div class="sparkline" id="sparkRdv"></div>
             </div>
             <a class="stat-link" href="calendrier.html"
               >Voir l'agenda
@@ -149,20 +147,12 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-label" href="patients.html">
-              Patients en salle d'attente
-            </div>
+            <div class="stat-label">Patients en salle d'attente</div>
             <div class="stat-row">
-              <span class="stat-num">3</span>
-              <div class="sparkline">
-                <svg viewBox="0 0 72 30">
-                  <path
-                    d="M0,22 C8,20 14,16 22,18 C30,20 36,12 44,14 C52,16 58,20 72,16"
-                  />
-                </svg>
-              </div>
+              <span class="stat-num" id="statSalleAttente">—</span>
+              <div class="sparkline" id="sparkSalle"></div>
             </div>
-            <a class="stat-link" href="#"
+            <a class="stat-link" href="#salle-attente"
               >Voir la liste
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
@@ -173,14 +163,8 @@
           <div class="stat-card">
             <div class="stat-label">Messages non lus</div>
             <div class="stat-row">
-              <span class="stat-num">5</span>
-              <div class="sparkline">
-                <svg viewBox="0 0 72 30">
-                  <path
-                    d="M0,16 C6,14 12,20 20,18 C28,16 34,8 42,12 C50,16 58,10 72,14"
-                  />
-                </svg>
-              </div>
+              <span class="stat-num" id="statMessages">—</span>
+              <div class="sparkline" id="sparkMessages"></div>
             </div>
             <a class="stat-link" href="messagerie.html"
               >Voir les messages
@@ -193,16 +177,10 @@
           <div class="stat-card">
             <div class="stat-label">Tâches à faire</div>
             <div class="stat-row">
-              <span class="stat-num">2</span>
-              <div class="sparkline">
-                <svg viewBox="0 0 72 30">
-                  <path
-                    d="M0,18 C10,16 20,22 30,18 C40,14 50,20 60,16 C65,14 68,12 72,10"
-                  />
-                </svg>
-              </div>
+              <span class="stat-num" id="statTaches">—</span>
+              <div class="sparkline" id="sparkTaches"></div>
             </div>
-            <a class="stat-link" href="#"
+            <a class="stat-link" href="#taches"
               >Voir les tâches
               <svg viewBox="0 0 24 24">
                 <polyline points="9 18 15 12 9 6" />
@@ -216,29 +194,7 @@
           <!-- PROCHAINS RDV -->
           <div class="card appts-card">
             <div class="card-title">Prochains Rendez-vous</div>
-
-            <div class="appt-row">
-              <span class="appt-time">09:00</span>
-              <div style="flex: 1">
-                <span class="appt-name">Sophie Durand</span>
-              </div>
-              <span class="badge badge-gold">En attente</span>
-            </div>
-
-            <div class="appt-row">
-              <span class="appt-time">09:30</span>
-              <div style="flex: 1">
-                <span class="appt-name">Alain Robert</span>
-              </div>
-            </div>
-
-            <div class="appt-row">
-              <span class="appt-time">10:15</span>
-              <div style="flex: 1">
-                <span class="appt-name">Julie Lefèvre</span>
-                <span class="appt-type">Contrôle annuel</span>
-              </div>
-            </div>
+            <div id="prochainsRdv"></div>
 
             <!-- Decorative doctor illustration placeholder -->
             <div class="appts-photo">
@@ -364,96 +320,23 @@
           </div>
 
           <!-- SALLE D'ATTENTE -->
-          <div class="card">
+          <div class="card" id="salle-attente">
             <div class="card-title">Patients en Salle d'attente</div>
-
-            <div class="patient-row">
-              <div class="pat-avatar">MD</div>
-              <div class="pat-info">
-                <span class="pat-name">Marc Dupont</span>
-                <span class="pat-type">Nouvel Patient</span>
-              </div>
-              <span class="badge badge-gold">En attente</span>
-            </div>
-
-            <div class="patient-row">
-              <div class="pat-avatar green">CM</div>
-              <div class="pat-info">
-                <span class="pat-name">Claire Martin</span>
-                <span class="pat-type">Consultation</span>
-              </div>
-            </div>
-
-            <div class="patient-row">
-              <div class="pat-avatar orange">PL</div>
-              <div class="pat-info">
-                <span class="pat-name">Paul Lefebvre</span>
-                <span class="pat-type">Suivi Diabète</span>
-              </div>
-            </div>
-
+            <div id="salleAttente"></div>
             <div class="waiting-footer">
-              <button class="btn-primary">
+              <a class="btn-primary" href="calendrier.html">
                 Gérer la salle d'attente
                 <svg viewBox="0 0 24 24">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
-              </button>
+              </a>
             </div>
           </div>
 
           <!-- DERNIERS MESSAGES -->
           <div class="card">
             <div class="card-title">Derniers Messages</div>
-
-            <div class="msg-row">
-              <div class="msg-icon unread">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                  />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-              </div>
-              <div class="msg-body">
-                <span class="msg-name">Thomas Lambert</span
-                ><span class="msg-subject">Résultats d'analyses</span>
-              </div>
-              <div class="msg-time">Il y a 10 min</div>
-            </div>
-
-            <div class="msg-row">
-              <div class="msg-icon unread">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                  />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-              </div>
-              <div class="msg-body">
-                <span class="msg-name">Laura Moreau</span
-                ><span class="msg-subject">Demande de rendez-vous</span>
-              </div>
-              <div class="msg-time">Hier</div>
-            </div>
-
-            <div class="msg-row">
-              <div class="msg-icon read">
-                <svg viewBox="0 0 24 24">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </div>
-              <div class="msg-body">
-                <span class="msg-name">Dr. Girard</span
-                ><span class="msg-subject">Compte-rendu de consultation</span>
-              </div>
-              <div class="msg-time bold">Il y a 2 jours</div>
-            </div>
-
+            <div id="derniersMessages"></div>
             <a class="card-link" href="messagerie.html">
               Voir tous les messages
               <svg viewBox="0 0 24 24">
@@ -463,31 +346,24 @@
           </div>
 
           <!-- NOTES ET TÂCHES -->
-          <div class="card">
+          <div class="card" id="taches">
             <div class="card-title">Notes et Tâches</div>
-
-            <div class="task-item">
-              <div class="task-cb" onclick="toggleTask(this)">
-                <svg viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <span class="task-label">Appeler Mr. Bernard</span>
-            </div>
-
-            <div class="task-item">
-              <div class="task-cb" onclick="toggleTask(this)">
-                <svg viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <span class="task-label">Préparer les ordonnances</span>
-            </div>
-
+            <div id="taskList"></div>
             <div class="task-footer">
-              <button class="btn-add" onclick="addTask()">
+              <button class="btn-add" type="button" id="btnAddTask">
                 + Ajouter une tâche
               </button>
+              <form class="task-form hidden" id="taskForm">
+                <input
+                  type="text"
+                  id="taskInput"
+                  placeholder="Nouvelle tâche…"
+                  maxlength="255"
+                  autocomplete="off"
+                />
+                <button type="submit" class="btn-save">Ajouter</button>
+                <button type="button" class="btn-cancel" id="btnCancelTask">Annuler</button>
+              </form>
             </div>
           </div>
         </div>
@@ -495,7 +371,9 @@
     </div>
 
     <script src="/js/auth.js"></script>
-
+    <script src="/js/roles.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
     <script src="js/index.js"></script>
   </body>
 </html>

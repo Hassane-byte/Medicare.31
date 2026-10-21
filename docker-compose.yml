@@ -16,6 +16,9 @@ services:
       - "8000"
     env_file:
       - .env
+    volumes:
+      # Pièces jointes de la messagerie et documents déposés
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -50,3 +53,4 @@ services:
 
 volumes:
   db_data:
+  uploads:
